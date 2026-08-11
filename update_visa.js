@@ -1,1 +1,0 @@
-const { PrismaClient } = require('@prisma/client'); const prisma = new PrismaClient(); async function main() { await prisma.industry.update({ where: { name: 'Travel & Immigration' }, data: { svc: 'visa' } }); console.log('Updated Travel & Immigration svc to visa'); } main().catch(console.error).finally(() => prisma.$disconnect());
