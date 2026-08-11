@@ -1,0 +1,39 @@
+{
+  "name": "languageguru-backend",
+  "version": "1.0.0",
+  "description": "Express.js REST API backend for Language Guru with PostgreSQL & Prisma",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:seed": "tsx prisma/seed.ts"
+  },
+  "keywords": [
+    "express",
+    "postgresql",
+    "prisma",
+    "languageguru"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.3.0",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^26.1.2",
+    "nodemon": "^3.1.9",
+    "prisma": "^6.3.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.7",
+    "typescript": "^7.0.2"
+  }
+}

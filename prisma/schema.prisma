@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  name         String?
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Language {
+  id         String   @id @default(uuid())
+  key        String   @unique
+  name       String
+  flag       String
+  native     String?
+  cat        String?
+  speakers   String?
+  region     String?
+  difficulty String?
+  script     String?
+  price      Float?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model City {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  name      String
+  ic        String?
+  isMetro   Boolean  @default(false)
+  state     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  name        String
+  icon        String
+  short       String?
+  price       Float?
+  fast        Int?
+  label       String?
+  tag         String?
+  title       String?
+  alt         Boolean?
+  p1          String?
+  p2          String?
+  features    String[]
+  docs        String[]
+  ctaLabel    String?
+  ctaKey      String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model QuoteRequest {
+  id            String   @id @default(uuid())
+  name          String
+  email         String?
+  phone         String
+  serviceKey    String?
+  sourceLang    String?
+  targetLang    String?
+  pages         Int      @default(1)
+  isInterpreter Boolean  @default(false)
+  notes         String?
+  status        String   @default("PENDING") // PENDING, CONTACTED, IN_PROGRESS, COMPLETED, CANCELLED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model GalleryItem {
+  id        String   @id @default(uuid())
+  doc       String   // Document type e.g. "Birth Certificate"
+  lang      String   // Language pair e.g. "English → German"
+  flag      String   // Flag emoji e.g. "🇩🇪"
+  langKey   String?  // language key e.g. "german"
+  time      String?  // Turnaround time e.g. "24 Hrs"
+  icon      String?  // Doc icon emoji e.g. "📜"
+  seal      String?  // Seal emoji e.g. "🇩🇪"
+  acc       String?  // Accepting authority e.g. "German Embassy"
+  cat       String   @default("General") // Category for filtering
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Industry {
+  id        String   @id @default(uuid())
+  icon      String
+  name      String   @unique
+  desc      String
+  svc       String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Translator {
+  id        String   @id @default(uuid())
+  name      String
+  lang      String   // Language e.g. "German"
+  city      String   // City e.g. "New Delhi"
+  spec      String?  // Specialization e.g. "Legal"
+  exp       String?  // Experience e.g. "8 years"
+  rate      String?  // Rate e.g. "₹899/pg"
+  cert      String?  // Certification e.g. "MA Translation"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Site Settings ─────────────────────────────────────────────────────────
+model SiteSettings {
+  id        String   @id @default("singleton")  // Only one record ever
+  // Company Info
+  companyName     String  @default("Language Guru")
+  tagline         String  @default("India's #1 Certified Translation Agency")
+  phone           String  @default("+91-9312690490")
+  email           String  @default("info@languageguruindia.com")
+  address         String  @default("617, West End Mall, Janakpuri, New Delhi – 110058")
+  website         String  @default("https://www.languageguruindia.com")
+  // Social Links
+  facebook        String  @default("")
+  instagram       String  @default("")
+  twitter         String  @default("")
+  linkedin        String  @default("")
+  youtube         String  @default("")
+  // Operational Settings
+  defaultTurnaround String @default("24 Hrs")
+  pricePerPage    Float   @default(850)
+  gstNumber       String  @default("")
+  panNumber       String  @default("")
+  // SEO
+  metaTitle       String  @default("Language Guru – Certified Translation Services India")
+  metaDesc        String  @default("Professional certified translation services in Delhi. 100+ languages. ISO quality.")
+  // UI / Branding
+  heroHeading     String  @default("Certified Translation Services in Delhi")
+  heroSubtitle    String  @default("ISO 9001:2015 Certified · 25+ Years Experience · 100+ Languages")
+  whatsappNumber  String  @default("+919312690490")
+  // System
+  maintenanceMode Boolean @default(false)
+  updatedAt DateTime @updatedAt
+}
