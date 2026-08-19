@@ -28,7 +28,11 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: admin.id, username: admin.username, role: admin.role, pwHash: admin.passwordHash.substring(0, 10) },
+      // A JWT payload is base64, not encrypted, so nothing derived from the
+      // password hash belongs in it. Session invalidation on password change is
+      // handled by comparing `iat` against AdminUser.passwordChangedAt in
+      // verifyAdminToken, which covers every device rather than just this one.
+      { id: admin.id, username: admin.username, role: admin.role },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );

@@ -1,0 +1,12 @@
+{
+  "watch": [
+    "src",
+    "prisma/schema.prisma",
+    ".env"
+  ],
+  "ext": "js,mjs,cjs,json,ts,prisma,env",
+  "ignore": [
+    "node_modules",
+    "uploads"
+  ]
+}
