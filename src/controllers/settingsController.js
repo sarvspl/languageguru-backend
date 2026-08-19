@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const prisma = require('../config/db');
+const { adminCookieOptions } = require('../config/cookie');
 
 // ─── Helper: Get or Create singleton settings record ───────────────────────
 const getOrCreateSettings = async () => {
@@ -113,12 +114,7 @@ const changePassword = async (req, res) => {
 
     // SEC-10: drop the current session; verifyAdminToken now rejects any token
     // issued before passwordChangedAt, so every other device is logged out too.
-    res.clearCookie('admin_token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      path: '/'
-    });
+    res.clearCookie('admin_token', adminCookieOptions());
 
     return res.status(200).json({ success: true, message: 'Password updated successfully! Please log in again.' });
   } catch (error) {

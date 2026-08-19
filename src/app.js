@@ -1,4 +1,6 @@
-require('dotenv').config();
+// Validates every required variable and exits with a clear message if any is
+// missing. Must be first so nothing reads process.env directly.
+const env = require('./config/env');
 // Reloaded with updated database configuration
 const express = require('express');
 const cors = require('cors');
@@ -26,7 +28,7 @@ const contactRoutes = require('./routes/contactRoutes');
 const clientsPageRoutes = require('./routes/clientsPageRoutes');
 const sitePageRoutes = require('./routes/sitePageRoutes');
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = env.PORT;
 
 // Security Headers
 const helmet = require('helmet');
@@ -50,25 +52,16 @@ const apiLimiter = rateLimit({
   message: { success: false, message: 'Too many requests from this IP, please try again after an hour' }
 });
 
-// Allowed Origins for CORS with Credentials (Cookies)
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.ADMIN_URL,
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:3002',
-  'http://localhost:5000',
-].filter(Boolean);
-
+// Allowed origins come from FRONTEND_URL and ADMIN_URL only, plus anything
+// listed in EXTRA_CORS_ORIGINS. No host is trusted implicitly by being written
+// into the source, and the previous blanket localhost allowance is gone.
 app.use(cors({
   origin: function (origin, callback) {
+    // Same-origin and server-to-server requests send no Origin header.
     if (!origin) return callback(null, true);
-    const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
-    if (allowedOrigins.includes(origin) || isLocalhost) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS: ' + origin));
-    }
+    const clean = origin.replace(/\/+$/, '');
+    if (env.ALLOWED_ORIGINS.includes(clean)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS: ' + origin));
   },
   credentials: true // Crucial for httpOnly cookies
 }));
@@ -131,7 +124,8 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Language Guru Express Backend running on http://localhost:${PORT}`);
+  console.log(`🚀 Language Guru API listening on port ${PORT} [${env.NODE_ENV}]`);
+  console.log(`   CORS origins: ${env.ALLOWED_ORIGINS.join(', ')}`);
 });
 
 module.exports = app;

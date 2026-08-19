@@ -1,7 +1,8 @@
 const { PrismaClient } = require('@prisma/client');
+const env = require('./env');
 
 const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
+  log: env.isProduction ? ['error'] : ['error', 'warn'],
 });
 
 // CFG-07: release pooled connections instead of leaking them on restart/deploy.

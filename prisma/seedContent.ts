@@ -11,6 +11,8 @@
  * Idempotent: every write is an upsert. Re-running refreshes seeded copy and
  * leaves admin-created rows alone.
  */
+// Load .env explicitly rather than relying on Prisma doing it as a side effect.
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();

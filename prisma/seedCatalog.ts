@@ -5,6 +5,8 @@
  * Idempotent: every write is an upsert keyed on `key`, so running it again
  * refreshes catalog rows without touching anything an admin has added.
  */
+// Load .env explicitly rather than relying on Prisma doing it as a side effect.
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 
 import { LANGUAGES } from '../../languageguru-web/data/languages';

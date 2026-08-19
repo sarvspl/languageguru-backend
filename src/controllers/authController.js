@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/db');
+const env = require('../config/env');
+const { adminCookieOptions } = require('../config/cookie');
 
 // Login Admin and set httpOnly cookie
 const login = async (req, res) => {
@@ -10,11 +12,6 @@ const login = async (req, res) => {
 
     if (!trimmedUsername || !password) {
       return res.status(400).json({ success: false, message: 'Username and password are required.' });
-    }
-
-    if (!process.env.JWT_SECRET) {
-      console.error('CRITICAL: JWT_SECRET is missing from environment variables.');
-      return res.status(500).json({ success: false, message: 'Internal Server Error: Authentication configuration missing.' });
     }
 
     const admin = await prisma.adminUser.findUnique({ where: { username: trimmedUsername } });
@@ -33,17 +30,14 @@ const login = async (req, res) => {
       // handled by comparing `iat` against AdminUser.passwordChangedAt in
       // verifyAdminToken, which covers every device rather than just this one.
       { id: admin.id, username: admin.username, role: admin.role },
-      process.env.JWT_SECRET,
+      env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     // Set secure httpOnly cookie
     res.cookie('admin_token', token, {
-      httpOnly: true, // Cannot be accessed by JavaScript (XSS protection)
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      ...adminCookieOptions(),
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/' // CRITICAL: ensure cookie is sent to all routes
     });
 
     return res.status(200).json({
@@ -60,10 +54,7 @@ const login = async (req, res) => {
 // Logout Admin and clear httpOnly cookie
 const logout = async (req, res) => {
   res.clearCookie('admin_token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    path: '/'
+    ...adminCookieOptions(),
   });
   return res.status(200).json({ success: true, message: 'Logged out successfully.' });
 };

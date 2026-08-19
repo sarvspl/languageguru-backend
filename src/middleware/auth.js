@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/db');
+const env = require('../config/env');
 
 const verifyAdminToken = async (req, res, next) => {
   // Read token from httpOnly cookie or Authorization header fallback
@@ -9,13 +10,8 @@ const verifyAdminToken = async (req, res, next) => {
     return res.status(401).json({ success: false, message: 'Access denied. Authentication token missing.' });
   }
 
-  if (!process.env.JWT_SECRET) {
-    console.error('CRITICAL: JWT_SECRET is missing from environment variables.');
-    return res.status(500).json({ success: false, message: 'Server authentication is not configured.' });
-  }
-
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, env.JWT_SECRET);
 
     // SEC-10: a password change must invalidate every token issued before it,
     // otherwise a stolen token stays valid for its full 7-day life.
