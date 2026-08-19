@@ -21,6 +21,9 @@ model AdminUser {
 model Language {
   id               String   @id @default(uuid())
   key              String   @unique
+  // `key` above is the immutable identifier the code and legacy script resolve
+  // against. `slug` is what appears in the URL and can be changed by an admin.
+  slug             String?  @unique
   name             String
   flag             String
   native           String?
@@ -46,6 +49,9 @@ model Language {
 model City {
   id               String   @id @default(uuid())
   key              String   @unique
+  // `key` above is the immutable identifier the code and legacy script resolve
+  // against. `slug` is what appears in the URL and can be changed by an admin.
+  slug             String?  @unique
   name             String
   ic               String?
   isMetro          Boolean  @default(false)
@@ -65,6 +71,9 @@ model City {
 model Service {
   id               String   @id @default(uuid())
   key              String   @unique
+  // `key` above is the immutable identifier the code and legacy script resolve
+  // against. `slug` is what appears in the URL and can be changed by an admin.
+  slug             String?  @unique
   name             String
   icon             String
   short            String?

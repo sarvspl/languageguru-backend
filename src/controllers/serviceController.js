@@ -1,4 +1,5 @@
 const prisma = require('../config/db');
+const { validateSlug, slugify } = require('../config/slug');
 
 // Get all services
 // BUG-10: the public site must only ever see published services, so a service can
@@ -43,6 +44,12 @@ const createService = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Service key already exists.' });
     }
 
+    // The URL slug defaults to the immutable key and can be changed later.
+    const slugCheck = await validateSlug({ model: 'service', raw: req.body.slug || key });
+    if (!slugCheck.ok) {
+      return res.status(slugCheck.status).json({ success: false, message: slugCheck.message });
+    }
+
     const service = await prisma.service.create({
       data: {
         key, name, icon, short: description || short, price, fast, label, tag, title, alt, p1, p2, ctaLabel, ctaKey, description,
@@ -50,7 +57,8 @@ const createService = async (req, res) => {
         docs: docs || [],
         certLang, certDoc, certFlag, certAcc, certTime, certIcon, metaTitle, metaDesc, faqs, reviews,
         contentOverrides: contentOverrides || {},
-        isActive: isActive !== undefined ? isActive : true
+        isActive: isActive !== undefined ? isActive : true,
+        slug: slugCheck.slug
       }
     });
     res.status(201).json({ success: true, data: service });
@@ -101,6 +109,15 @@ const updateService = async (req, res) => {
     if (docs !== undefined) dataToUpdate.docs = docs;
     // BUG-10: without this the isActive flag could never be turned off.
     if (isActive !== undefined) dataToUpdate.isActive = isActive;
+
+    // A submitted slug is validated; an absent one leaves the current URL alone.
+    if (req.body.slug !== undefined) {
+      const slugCheck = await validateSlug({ model: 'service', raw: req.body.slug, id });
+      if (!slugCheck.ok) {
+        return res.status(slugCheck.status).json({ success: false, message: slugCheck.message });
+      }
+      dataToUpdate.slug = slugCheck.slug;
+    }
 
     const service = await prisma.service.update({
       where: { id },

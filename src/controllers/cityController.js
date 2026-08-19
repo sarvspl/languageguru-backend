@@ -1,4 +1,5 @@
 const prisma = require('../config/db');
+const { validateSlug, slugify } = require('../config/slug');
 
 // BUG-10: the public endpoint returns published cities only, so a city can be
 // taken off the site by deactivating it instead of deleting it permanently.
@@ -38,8 +39,14 @@ const createCity = async (req, res) => {
       return res.status(400).json({ success: false, message: 'City with this key already exists.' });
     }
 
+    // The URL slug defaults to the immutable key and can be changed later.
+    const slugCheck = await validateSlug({ model: 'city', raw: req.body.slug || key });
+    if (!slugCheck.ok) {
+      return res.status(slugCheck.status).json({ success: false, message: slugCheck.message });
+    }
+
     const city = await prisma.city.create({
-      data: { key, name, ic, state, isMetro, isActive: isActive !== undefined ? isActive : true, metaTitle, metaDesc, contentOverrides, faqs, reviews }
+      data: { key, name, ic, state, isMetro, isActive: isActive !== undefined ? isActive : true, metaTitle, metaDesc, contentOverrides, faqs, reviews, slug: slugCheck.slug }
     });
     res.status(201).json({ success: true, data: city });
   } catch (error) {
@@ -63,6 +70,15 @@ const updateCity = async (req, res) => {
     if (contentOverrides !== undefined) data.contentOverrides = contentOverrides;
     if (faqs !== undefined) data.faqs = faqs;
     if (reviews !== undefined) data.reviews = reviews;
+
+    // A submitted slug is validated; an absent one leaves the current URL alone.
+    if (req.body.slug !== undefined) {
+      const slugCheck = await validateSlug({ model: 'city', raw: req.body.slug, id });
+      if (!slugCheck.ok) {
+        return res.status(slugCheck.status).json({ success: false, message: slugCheck.message });
+      }
+      data.slug = slugCheck.slug;
+    }
 
     const city = await prisma.city.update({ where: { id }, data });
     res.status(200).json({ success: true, data: city });

@@ -1,0 +1,170 @@
+[
+  {
+    "key": "conf",
+    "label": "🎤 Conference",
+    "icon": "🎤",
+    "title": "Conference & Simultaneous Interpretation",
+    "desc": "Professional simultaneous and consecutive interpretation for international conferences, summits, seminars and corporate events across India. Our conference interpreters are trained in ISO-standard booth protocols and work in teams of two for events longer than an hour, so accuracy never drops due to fatigue. We cover 120+ language pairs including German, French, Chinese, Japanese, Korean, Arabic and Spanish, and complete audio equipment — booths, receivers and headsets — can be arranged on request. From diplomatic summits to product launches, Language Guru has supported 2,000+ events since 2005.",
+    "points": [
+      "Simultaneous booth interpretation",
+      "Consecutive for panel sessions",
+      "Whispered (chuchotage) interpreting",
+      "Technical subject specialists",
+      "Booths, receivers & headsets",
+      "Team of 2 for long events",
+      "Available in 50+ Indian cities",
+      "Pre-event agenda briefing"
+    ],
+    "steps": [
+      "Book Interpreter",
+      "Brief on Agenda",
+      "Interpreter Assigned",
+      "Service Delivered"
+    ],
+    "bookAs": "Conference Interpreter"
+  },
+  {
+    "key": "legal",
+    "label": "⚖️ Legal",
+    "icon": "⚖️",
+    "title": "Legal & Court Interpretation",
+    "desc": "Certified court interpreters for legal proceedings, arbitrations, depositions, police interviews and immigration hearings. Every legal interpreter on our panel is court-experienced and understands procedural terminology in both languages, so testimony is rendered precisely without summarising or omission. We regularly assist law firms, embassies and government agencies across Delhi NCR and India. All engagements are covered by strict NDAs, and sworn or affidavit-backed interpretation certificates can be issued wherever the court requires them. Same-day emergency assignments are routinely handled.",
+    "points": [
+      "Court-certified interpreters",
+      "Police & investigation statements",
+      "Immigration tribunal hearings",
+      "Depositions & cross-examinations",
+      "Arbitration & mediation sessions",
+      "Sworn interpretation certificates",
+      "NDA & confidentiality guaranteed",
+      "Same-day emergency availability"
+    ],
+    "steps": [
+      "Submit Request",
+      "Document Review",
+      "Certified Interpreter",
+      "Court Session"
+    ],
+    "bookAs": "Legal / Court Interpreter"
+  },
+  {
+    "key": "med",
+    "label": "🏥 Medical",
+    "icon": "🏥",
+    "title": "Medical & Healthcare Interpretation",
+    "desc": "Specialist patient-interpreter services for hospitals, clinics, medical tourism providers and clinical research organisations. Our medical interpreters are trained in anatomy, pharmacology and consent-process terminology, enabling clear doctor-patient communication during consultations, surgery counselling and follow-ups. India is a major medical tourism destination, and we routinely support Arabic, Russian, French and Bengali speaking patients at leading hospitals in Delhi, Gurgaon and Chennai. Every assignment is HIPAA and DPDP compliant with complete patient confidentiality, and male or female interpreters can be requested.",
+    "points": [
+      "Hospital consultations",
+      "Medical tourism support",
+      "Clinical trial interpretation",
+      "Patient counselling sessions",
+      "Surgery & ICU communication",
+      "Medical device demonstrations",
+      "HIPAA & DPDP compliant",
+      "Male/female interpreter choice"
+    ],
+    "steps": [
+      "Book via WhatsApp",
+      "Share Medical Brief",
+      "Qualified Interpreter",
+      "Consultation Done"
+    ],
+    "bookAs": "Medical Interpreter"
+  },
+  {
+    "key": "biz",
+    "label": "💼 Business",
+    "icon": "💼",
+    "title": "Business & Corporate Interpretation",
+    "desc": "Professional business interpreters for negotiations, board meetings, factory audits, trade shows and corporate presentations. Our interpreters combine language mastery with real industry knowledge — manufacturing, IT, pharma, finance — so technical discussions flow naturally without losing nuance. We have supported Indo-German machine installations, Indo-Japanese joint ventures and Chinese supplier audits across Delhi NCR, Pune and Chennai. Interpreters can travel with your team anywhere in India for multi-day, multi-city assignments, and every corporate engagement includes a signed NDA as standard practice.",
+    "points": [
+      "Board meetings & negotiations",
+      "Trade fair & expo booths",
+      "Factory audits & site visits",
+      "Machine installation support",
+      "Supplier & vendor meetings",
+      "Corporate training sessions",
+      "Multi-day, multi-city travel",
+      "NDAs for all corporate clients"
+    ],
+    "steps": [
+      "Contact Us",
+      "Business Brief",
+      "Industry Expert Assigned",
+      "Meeting Conducted"
+    ],
+    "bookAs": "Business Meeting"
+  },
+  {
+    "key": "tech",
+    "label": "⚙️ Technical",
+    "icon": "⚙️",
+    "title": "Technical Interpretation — Machine Installation & Commissioning",
+    "desc": "On-site technical interpreters for machine installation, commissioning, and industrial projects — one of our most in-demand services. When foreign engineers (German, Chinese, Japanese, Korean, Italian and more) arrive to install or commission machinery, our technical interpreters bridge the communication gap between them and your Indian operations team on the shop floor. They are experienced with engineering terminology, machine manuals, control panels, safety protocols and Factory/Site Acceptance Test (FAT/SAT) procedures, and can be deployed for multi-day and multi-week projects at plants anywhere in India — ensuring installation, trials, operator training and handover happen smoothly without costly misunderstandings.",
+    "points": [
+      "Machine installation & commissioning",
+      "FAT / SAT test-run support",
+      "Operator & maintenance training",
+      "Plant visits & factory audits",
+      "Engineering manuals & drawing terminology",
+      "German / Chinese / Japanese / Korean engineers",
+      "Safety briefing interpretation",
+      "Multi-day & multi-week deployment"
+    ],
+    "steps": [
+      "Project Brief Shared",
+      "Technical Interpreter Assigned",
+      "On-Site Support",
+      "Handover Complete"
+    ],
+    "bookAs": "Machine Installation"
+  },
+  {
+    "key": "remote",
+    "label": "📞 Remote",
+    "icon": "📞",
+    "title": "Telephone & Remote Interpretation",
+    "desc": "On-demand over-the-phone (OPI) and video remote interpreting (VRI) in 100+ languages — connect with a professional interpreter without travel costs or scheduling delays. Sessions run over Zoom, Microsoft Teams, Google Meet, Webex or a simple phone call, with average connection time under 60 seconds and 24×7 availability. Ideal for visa interviews, telemedicine consultations, international client calls, online depositions and virtual conferences. Remote interpretation is billed hourly, making it the most economical option, and encrypted lines with optional session recordings keep every call fully confidential.",
+    "points": [
+      "OPI in 100+ languages",
+      "Zoom / Teams / Meet / Webex",
+      "24×7 · <60 sec connection",
+      "Visa & embassy interviews",
+      "Telemedicine consultations",
+      "Online depositions",
+      "Hourly billing — economical",
+      "Encrypted, recordings optional"
+    ],
+    "steps": [
+      "Schedule Slot",
+      "Connect Call",
+      "Live Interpretation",
+      "Recording Optional"
+    ],
+    "bookAs": "Online Meetings"
+  },
+  {
+    "key": "escort",
+    "label": "✈️ Escort",
+    "icon": "✈️",
+    "title": "Escort & Liaison Interpretation",
+    "desc": "A personal interpreter for the full duration of a visit, delegation or tour — from airport pickup to final departure. We support foreign executives, government and embassy delegations, factory inspection teams and high-net-worth tourists across multi-day, multi-city itineraries anywhere in India. Escort interpreters handle meetings, site visits, cultural outings and even restaurant conversations, while also providing cultural-protocol guidance and etiquette briefings so nothing is lost between languages. For mixed delegations we assemble multi-language teams under a single coordinator for a seamless experience.",
+    "points": [
+      "Multi-day executive escort",
+      "Government & embassy delegations",
+      "Factory inspection teams",
+      "VIP city & cultural tours",
+      "Airport pickup to departure",
+      "Cultural-protocol guidance",
+      "Etiquette briefings included",
+      "Multi-language team option"
+    ],
+    "steps": [
+      "Itinerary Shared",
+      "Interpreter Assigned",
+      "Daily Briefing",
+      "Tour Completed"
+    ],
+    "bookAs": "Tour Escort Service"
+  }
+]

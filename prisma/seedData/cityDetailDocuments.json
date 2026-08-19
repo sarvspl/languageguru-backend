@@ -1,0 +1,428 @@
+{
+  "quickList": [
+    {
+      "label": "Birth Certificate"
+    },
+    {
+      "label": "Marriage Certificate"
+    },
+    {
+      "label": "Degree Certificate"
+    },
+    {
+      "label": "Legal Contracts"
+    },
+    {
+      "label": "Medical Reports"
+    },
+    {
+      "label": "Bank Statements"
+    },
+    {
+      "label": "Affidavits"
+    },
+    {
+      "label": "Property Documents"
+    },
+    {
+      "label": "Passport Pages"
+    },
+    {
+      "label": "Power of Attorney"
+    },
+    {
+      "label": "Technical Manuals"
+    },
+    {
+      "label": "Police Clearance (PCC)"
+    },
+    {
+      "label": "Company Registration"
+    },
+    {
+      "label": "Death Certificate"
+    },
+    {
+      "label": "Financial Statements"
+    },
+    {
+      "label": "Visa Documents"
+    }
+  ],
+  "categories": [
+    {
+      "key": "immigration",
+      "label": "🛂 Immigration",
+      "icon": "🛂",
+      "tint": "#dbeafe",
+      "name": "Immigration",
+      "items": [
+        {
+          "icon": "🛂",
+          "label": "Birth Certificate"
+        },
+        {
+          "icon": "💍",
+          "label": "Marriage Certificate"
+        },
+        {
+          "icon": "💀",
+          "label": "Death Certificate"
+        },
+        {
+          "icon": "👮",
+          "label": "Police Clearance (PCC)"
+        },
+        {
+          "icon": "🏠",
+          "label": "Domicile Certificate"
+        },
+        {
+          "icon": "✉️",
+          "label": "Sponsor Letter"
+        },
+        {
+          "icon": "🛂",
+          "label": "Passport Pages"
+        },
+        {
+          "icon": "🌍",
+          "label": "Travel History"
+        },
+        {
+          "icon": "🏥",
+          "label": "Medical Fitness Cert"
+        },
+        {
+          "icon": "💰",
+          "label": "Income / Employment Proof"
+        },
+        {
+          "icon": "🎓",
+          "label": "Educational Certificates"
+        },
+        {
+          "icon": "🏦",
+          "label": "Bank Statements"
+        },
+        {
+          "icon": "📝",
+          "label": "Affidavit of Support"
+        },
+        {
+          "icon": "🔏",
+          "label": "Power of Attorney"
+        },
+        {
+          "icon": "🌐",
+          "label": "Visa Application Forms"
+        },
+        {
+          "icon": "👨‍👩‍👧",
+          "label": "Family Registration Docs"
+        }
+      ]
+    },
+    {
+      "key": "legal",
+      "label": "⚖️ Legal",
+      "icon": "⚖️",
+      "tint": "#fef3c7",
+      "name": "Legal Documents",
+      "items": [
+        {
+          "icon": "⚖️",
+          "label": "Court Orders / Judgments"
+        },
+        {
+          "icon": "🔏",
+          "label": "Power of Attorney"
+        },
+        {
+          "icon": "🤝",
+          "label": "Partnership Deed"
+        },
+        {
+          "icon": "🏠",
+          "label": "Property / Sale Deed"
+        },
+        {
+          "icon": "📝",
+          "label": "Affidavits"
+        },
+        {
+          "icon": "📬",
+          "label": "Legal Notices"
+        },
+        {
+          "icon": "📋",
+          "label": "MOA / AOA"
+        },
+        {
+          "icon": "📃",
+          "label": "Contracts / Agreements"
+        },
+        {
+          "icon": "🏛️",
+          "label": "Arbitration Awards"
+        },
+        {
+          "icon": "⚖️",
+          "label": "Divorce Decree"
+        },
+        {
+          "icon": "🔍",
+          "label": "Investigation Reports"
+        },
+        {
+          "icon": "🏢",
+          "label": "Company Registration"
+        },
+        {
+          "icon": "🌐",
+          "label": "Import / Export Licenses"
+        },
+        {
+          "icon": "💼",
+          "label": "Employment Contracts"
+        },
+        {
+          "icon": "🔒",
+          "label": "NDA / Agreements"
+        },
+        {
+          "icon": "📜",
+          "label": "Wills &amp; Trusts"
+        }
+      ]
+    },
+    {
+      "key": "academic",
+      "label": "🎓 Academic",
+      "icon": "🎓",
+      "tint": "#dcfce7",
+      "name": "Academic",
+      "items": [
+        {
+          "icon": "🎓",
+          "label": "Degree Certificate"
+        },
+        {
+          "icon": "📊",
+          "label": "Mark Sheets / Transcripts"
+        },
+        {
+          "icon": "🚀",
+          "label": "Migration Certificate"
+        },
+        {
+          "icon": "🏫",
+          "label": "School Leaving Certificate"
+        },
+        {
+          "icon": "📝",
+          "label": "DDV (Germany)"
+        },
+        {
+          "icon": "🌐",
+          "label": "Medium of Instruction"
+        },
+        {
+          "icon": "🏆",
+          "label": "Achievement Certificates"
+        },
+        {
+          "icon": "📄",
+          "label": "Research Papers"
+        },
+        {
+          "icon": "📋",
+          "label": "Scholarship Docs"
+        },
+        {
+          "icon": "🔬",
+          "label": "Thesis / Dissertation"
+        },
+        {
+          "icon": "🌍",
+          "label": "WES / IQAS Evaluation"
+        },
+        {
+          "icon": "🎖️",
+          "label": "Professional Certifications"
+        }
+      ]
+    },
+    {
+      "key": "medical",
+      "label": "🏥 Medical",
+      "icon": "🏥",
+      "tint": "#fce7f3",
+      "name": "Medical",
+      "items": [
+        {
+          "icon": "🏥",
+          "label": "Medical Reports"
+        },
+        {
+          "icon": "🛏️",
+          "label": "Hospital Discharge Summary"
+        },
+        {
+          "icon": "💊",
+          "label": "Prescriptions / Lab Reports"
+        },
+        {
+          "icon": "🔬",
+          "label": "Clinical Trial Docs"
+        },
+        {
+          "icon": "🩺",
+          "label": "Pharma Documentation"
+        },
+        {
+          "icon": "♿",
+          "label": "Disability Certificates"
+        },
+        {
+          "icon": "📋",
+          "label": "Health Insurance Docs"
+        },
+        {
+          "icon": "🧬",
+          "label": "Medical Device Manuals"
+        },
+        {
+          "icon": "🔏",
+          "label": "Drug Approvals"
+        },
+        {
+          "icon": "📄",
+          "label": "Research Papers"
+        },
+        {
+          "icon": "🌿",
+          "label": "Ayurvedic / Herbal Docs"
+        },
+        {
+          "icon": "📃",
+          "label": "Medical Certificates"
+        }
+      ]
+    },
+    {
+      "key": "financial",
+      "label": "💼 Financial",
+      "icon": "💼",
+      "tint": "#fff7ed",
+      "name": "Financial",
+      "items": [
+        {
+          "icon": "🏦",
+          "label": "Bank Statements"
+        },
+        {
+          "icon": "📊",
+          "label": "Income Tax Returns"
+        },
+        {
+          "icon": "📈",
+          "label": "Balance Sheets / P&L"
+        },
+        {
+          "icon": "📋",
+          "label": "Annual Reports"
+        },
+        {
+          "icon": "🤝",
+          "label": "Business Contracts"
+        },
+        {
+          "icon": "💰",
+          "label": "Salary Certificates"
+        },
+        {
+          "icon": "📄",
+          "label": "GST / VAT Documents"
+        },
+        {
+          "icon": "🌍",
+          "label": "Import / Export Docs"
+        },
+        {
+          "icon": "📃",
+          "label": "Insurance Policies"
+        },
+        {
+          "icon": "💼",
+          "label": "Investment Documents"
+        },
+        {
+          "icon": "🏛️",
+          "label": "RBI / SEBI Filings"
+        },
+        {
+          "icon": "📝",
+          "label": "Audit Reports"
+        }
+      ]
+    },
+    {
+      "key": "technical",
+      "label": "🔬 Technical",
+      "icon": "🔬",
+      "tint": "#f0fdf4",
+      "name": "Technical",
+      "items": [
+        {
+          "icon": "⚙️",
+          "label": "Machinery Manuals"
+        },
+        {
+          "icon": "🔧",
+          "label": "Engineering Specifications"
+        },
+        {
+          "icon": "⚠️",
+          "label": "Safety Data Sheets (SDS)"
+        },
+        {
+          "icon": "📖",
+          "label": "Installation / User Guides"
+        },
+        {
+          "icon": "💡",
+          "label": "Patents &amp; Trademarks"
+        },
+        {
+          "icon": "💻",
+          "label": "Software Documentation"
+        },
+        {
+          "icon": "🏭",
+          "label": "Quality Certifications"
+        },
+        {
+          "icon": "📐",
+          "label": "Technical Drawings"
+        },
+        {
+          "icon": "🔩",
+          "label": "Maintenance Guides"
+        },
+        {
+          "icon": "🌿",
+          "label": "Environmental Reports"
+        },
+        {
+          "icon": "🛡️",
+          "label": "Risk Assessments"
+        },
+        {
+          "icon": "📋",
+          "label": "Compliance Certificates"
+        }
+      ]
+    }
+  ]
+}

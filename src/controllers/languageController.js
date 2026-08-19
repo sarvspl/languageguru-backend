@@ -1,4 +1,5 @@
 const prisma = require('../config/db');
+const { validateSlug, slugify } = require('../config/slug');
 
 // Helper to sanitize/parse JSON fields
 const parseJsonField = (field) => {
@@ -55,8 +56,10 @@ const getAllLanguages = async (req, res) => {
 const getLanguageByKey = async (req, res) => {
   try {
     const { key } = req.params;
+    // An admin-changed slug is the live URL, so it has to resolve here too —
+    // the old key keeps working so existing links do not break.
     const rows = await prisma.$queryRawUnsafe(
-      'SELECT * FROM "Language" WHERE "key" = $1 OR "id" = $1 OR LOWER("key") = LOWER($1) OR LOWER("name") = LOWER($1) LIMIT 1',
+      'SELECT * FROM "Language" WHERE "key" = $1 OR "slug" = $1 OR "id" = $1 OR LOWER("key") = LOWER($1) OR LOWER("slug") = LOWER($1) OR LOWER("name") = LOWER($1) LIMIT 1',
       key
     );
 
@@ -90,13 +93,19 @@ const createLanguage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Language with this key/slug already exists.' });
     }
 
+    // The URL slug defaults to the immutable key and can be changed later.
+    const slugCheck = await validateSlug({ model: 'language', raw: req.body.slug || cleanKey });
+    if (!slugCheck.ok) {
+      return res.status(slugCheck.status).json({ success: false, message: slugCheck.message });
+    }
+
     const sql = `
       INSERT INTO "Language" (
         "id", "key", "name", "flag", "native", "cat", "speakers", "region", "difficulty", "script",
-        "price", "metaTitle", "metaDesc", "metaKeywords", "ogImage", "contentOverrides", "faqs", "reviews", "pricing", "isActive", "createdAt", "updatedAt"
+        "price", "metaTitle", "metaDesc", "metaKeywords", "ogImage", "contentOverrides", "faqs", "reviews", "pricing", "isActive", "slug", "createdAt", "updatedAt"
       ) VALUES (
         gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9,
-        $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb, $17::jsonb, $18::jsonb, $19, NOW(), NOW()
+        $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb, $17::jsonb, $18::jsonb, $19, $20, NOW(), NOW()
       )
       RETURNING *
     `;
@@ -121,7 +130,8 @@ const createLanguage = async (req, res) => {
       faqs ? JSON.stringify(faqs) : null,
       reviews ? JSON.stringify(reviews) : null,
       pricing ? JSON.stringify(pricing) : null,
-      isActive !== undefined ? Boolean(isActive) : true
+      isActive !== undefined ? Boolean(isActive) : true,
+      slugCheck.slug
     );
 
     res.status(201).json({ success: true, data: formatLanguage(insertedRows[0]) });
@@ -152,6 +162,16 @@ const updateLanguage = async (req, res) => {
 
     const existing = existingRows[0];
 
+    // A submitted slug is validated; an absent one leaves the current URL alone.
+    let nextSlug = existing.slug || existing.key;
+    if (req.body.slug !== undefined) {
+      const slugCheck = await validateSlug({ model: 'language', raw: req.body.slug, id: existing.id });
+      if (!slugCheck.ok) {
+        return res.status(slugCheck.status).json({ success: false, message: slugCheck.message });
+      }
+      nextSlug = slugCheck.slug;
+    }
+
     const sql = `
       UPDATE "Language"
       SET 
@@ -173,8 +193,9 @@ const updateLanguage = async (req, res) => {
         "reviews" = $16::jsonb,
         "pricing" = $17::jsonb,
         "isActive" = $18,
+        "slug" = $19,
         "updatedAt" = NOW()
-      WHERE "id" = $19
+      WHERE "id" = $20
       RETURNING *
     `;
 
@@ -198,6 +219,7 @@ const updateLanguage = async (req, res) => {
       reviews !== undefined ? JSON.stringify(reviews) : (existing.reviews ? JSON.stringify(existing.reviews) : null),
       pricing !== undefined ? JSON.stringify(pricing) : (existing.pricing ? JSON.stringify(existing.pricing) : null),
       isActive !== undefined ? Boolean(isActive) : existing.isActive,
+      nextSlug,
       existing.id
     );
 

@@ -84,6 +84,78 @@ const RESERVED = new Set(['api', 'admin', '_next', 'uploads', 'static', 'favicon
 
 const normaliseSlug = (raw) => String(raw ?? '').trim().replace(/^\/+|\/+$/g, '').toLowerCase();
 
+const KEY_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+// POST /api/v1/site-pages — create a page. `key` is the immutable identifier the
+// front end resolves against; `slug` is the admin-editable public URL.
+const createPage = async (req, res) => {
+  try {
+    const key = String(req.body.key ?? '').trim().toLowerCase();
+    const title = String(req.body.title ?? '').trim();
+
+    if (!key || !title) {
+      return res.status(400).json({ success: false, message: 'Key and title are required.' });
+    }
+    if (!KEY_RE.test(key)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Key may contain lower-case letters, numbers and single hyphens only (for example "our-team").',
+      });
+    }
+    if (RESERVED.has(key)) {
+      return res.status(400).json({ success: false, message: `"${key}" is reserved and cannot be used as a key.` });
+    }
+    const keyClash = await prisma.sitePage.findUnique({ where: { key } });
+    if (keyClash) {
+      return res.status(409).json({ success: false, message: `A page with the key "${key}" already exists.` });
+    }
+
+    const slug = req.body.slug !== undefined ? normaliseSlug(req.body.slug) : key;
+    if (!slug) {
+      return res.status(400).json({ success: false, message: 'Slug is required.' });
+    }
+    if (!SLUG_RE.test(slug)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Slug may contain lower-case letters, numbers and single hyphens only (for example "about-us").',
+      });
+    }
+    if (RESERVED.has(slug)) {
+      return res.status(400).json({ success: false, message: `"${slug}" is reserved and cannot be used as a slug.` });
+    }
+    const slugClash = await prisma.sitePage.findFirst({ where: { slug } });
+    if (slugClash) {
+      return res.status(409).json({ success: false, message: `The slug "${slug}" is already used by the ${slugClash.title} page.` });
+    }
+    const pageClash = await prisma.page.findFirst({ where: { slug } });
+    if (pageClash) {
+      return res.status(409).json({ success: false, message: `The slug "${slug}" is already used by the content page "${pageClash.title}".` });
+    }
+
+    const data = { key, slug, title };
+    [
+      'navLabel', 'heroTag', 'heroTitle', 'heroSubtitle', 'heroImage',
+      'metaTitle', 'metaDesc', 'metaKeywords', 'ogImage',
+    ].forEach((f) => { if (req.body[f] !== undefined) data[f] = req.body[f]; });
+    ['showInNav', 'showInFooter', 'showInSitemap', 'isActive'].forEach((f) => {
+      if (req.body[f] !== undefined) data[f] = Boolean(req.body[f]);
+    });
+    if (req.body.sortOrder !== undefined) data.sortOrder = parseInt(req.body.sortOrder, 10) || 0;
+
+    const page = await prisma.sitePage.create({
+      data,
+      include: { sections: { orderBy: { sortOrder: 'asc' }, select: sectionSelect } },
+    });
+    return res.status(201).json({ success: true, data: shape(page), message: 'Page created.' });
+  } catch (error) {
+    if (error && error.code === 'P2002') {
+      return res.status(409).json({ success: false, message: 'That key or slug is already in use.' });
+    }
+    console.error('createPage error:', error);
+    return res.status(500).json({ success: false, message: 'Server error creating page.' });
+  }
+};
+
 // PUT /api/v1/site-pages/:key — page meta, including the admin-editable slug
 const updatePage = async (req, res) => {
   try {
@@ -150,6 +222,9 @@ const updatePage = async (req, res) => {
 };
 
 // ─── Sections ──────────────────────────────────────────────────────────────
+const body_settingsPatch = (body) =>
+  body && body.settingsPatch && typeof body.settingsPatch === 'object' && !Array.isArray(body.settingsPatch);
+
 const sectionPayload = (body) => {
   const data = {};
   ['kind', 'tag', 'heading', 'subheading', 'body', 'layout', 'imageUrl',
@@ -157,6 +232,10 @@ const sectionPayload = (body) => {
     if (body[f] !== undefined) data[f] = body[f];
   });
   if (body.items !== undefined) data.items = body.items;
+  // `settings` replaces the whole object — that is what the dashboard editor
+  // sends, and it is the only way to delete a key. `settingsPatch` merges
+  // instead, so an integration can change one value without silently wiping the
+  // rest; a null in the patch deletes that key.
   if (body.settings !== undefined) data.settings = body.settings;
   if (body.sortOrder !== undefined) data.sortOrder = parseInt(body.sortOrder, 10) || 0;
   if (body.isActive !== undefined) data.isActive = Boolean(body.isActive);
@@ -171,6 +250,19 @@ const upsertSection = async (req, res) => {
     if (!page) return res.status(404).json({ success: false, message: 'Page not found.' });
 
     const data = sectionPayload(req.body);
+
+    if (body_settingsPatch(req.body)) {
+      const current = await prisma.pageSection.findUnique({
+        where: { pageKey_sectionKey: { pageKey: key, sectionKey } },
+        select: { settings: true },
+      });
+      const merged = { ...(current?.settings || {}), ...req.body.settingsPatch };
+      Object.keys(req.body.settingsPatch).forEach((k) => {
+        if (req.body.settingsPatch[k] === null) delete merged[k];
+      });
+      data.settings = merged;
+    }
+
     const section = await prisma.pageSection.upsert({
       where: { pageKey_sectionKey: { pageKey: key, sectionKey } },
       update: data,
@@ -196,6 +288,45 @@ const deleteSection = async (req, res) => {
     }
     console.error('deleteSection error:', error);
     return res.status(500).json({ success: false, message: 'Server error deleting section.' });
+  }
+};
+
+// DELETE /api/v1/site-pages/:key — remove a page and its sections.
+// Pages the front end renders by key would 404 if deleted, so those are
+// deactivated instead of destroyed unless the caller insists with ?force=true.
+const CORE_PAGES = new Set([
+  'home', 'about', 'services', 'languages', 'cities', 'gallery', 'industries',
+  'translators', 'clients', 'contact', 'quote', 'join', 'payment', 'sitemap',
+]);
+
+const deletePage = async (req, res) => {
+  try {
+    const { key } = req.params;
+    const existing = await prisma.sitePage.findUnique({ where: { key } });
+    if (!existing) return res.status(404).json({ success: false, message: 'Page not found.' });
+
+    if (CORE_PAGES.has(key) && String(req.query.force) !== 'true') {
+      const page = await prisma.sitePage.update({
+        where: { key },
+        data: { isActive: false },
+        include: { sections: { orderBy: { sortOrder: 'asc' }, select: sectionSelect } },
+      });
+      return res.status(200).json({
+        success: true,
+        data: shape(page),
+        message: `"${existing.title}" is a built-in page, so it was unpublished rather than deleted. Its content is kept and it can be published again at any time.`,
+      });
+    }
+
+    // PageSection cascades on the pageKey relation.
+    await prisma.sitePage.delete({ where: { key } });
+    return res.status(200).json({ success: true, message: `Page "${existing.title}" deleted.` });
+  } catch (error) {
+    if (error && error.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Page not found.' });
+    }
+    console.error('deletePage error:', error);
+    return res.status(500).json({ success: false, message: 'Server error deleting page.' });
   }
 };
 
@@ -233,6 +364,6 @@ const saveSections = async (req, res) => {
 };
 
 module.exports = {
-  getPages, getAllPages, getPage, updatePage,
+  getPages, getAllPages, getPage, createPage, updatePage, deletePage,
   upsertSection, deleteSection, saveSections,
 };
