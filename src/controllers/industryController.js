@@ -86,10 +86,11 @@ exports.updateIndustry = async (req, res) => {
 exports.deleteIndustry = async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.industry.delete({
-      where: { id }
-    });
-    res.json({ success: true, message: 'Industry deleted successfully' });
+    const existing = await prisma.industry.findUnique({ where: { id } });
+    if (!existing) return res.status(404).json({ success: false, message: 'Industry not found' });
+
+    await prisma.industry.delete({ where: { id } });
+    res.json({ success: true, message: 'Industry deleted successfully.' });
   } catch (error) {
     console.error('Error deleting industry:', error);
     res.status(500).json({ success: false, message: 'Server Error' });

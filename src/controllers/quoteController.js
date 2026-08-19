@@ -3,23 +3,54 @@ const prisma = require('../config/db');
 // Submit quote request (Public)
 const submitQuote = async (req, res) => {
   try {
-    const { name, email, phone, serviceKey, sourceLang, targetLang, pages, isInterpreter, notes } = req.body;
+    const { name, email, phone, serviceKey, sourceLang, targetLang, pages, isInterpreter, notes, service, city, message } = req.body;
 
     if (!name || !phone) {
       return res.status(400).json({ success: false, message: 'Name and phone are required.' });
     }
 
+    const numericMap = {
+      '850': 'Certified Translation',
+      '899': 'Website Localization',
+      '999': 'Notarized Translation',
+      '1400': 'Apostille & Attestation',
+      '2500': 'Interpreter Service',
+      '4500': 'Interpreter Service (Half-Day)',
+      '7500': 'Interpreter Service (Full-Day)',
+      'certified': 'Certified Translation',
+      'legal': 'Legal Translation',
+      'medical': 'Medical Translation',
+      'technical': 'Technical Translation',
+      'business': 'Business Translation',
+      'academic': 'Academic Translation',
+      'interpretation': 'Interpretation Service',
+      'apostille': 'MEA Apostille',
+      'attestation': 'Embassy Attestation',
+      'localization': 'Website Localization'
+    };
+    let cleanKey = (serviceKey || service || 'Certified Translation').toString().trim();
+    if (numericMap[cleanKey.toLowerCase()]) {
+      cleanKey = numericMap[cleanKey.toLowerCase()];
+    } else {
+      cleanKey = cleanKey.split(' — ')[0].split(' - ')[0].trim();
+    }
+    const finalServiceKey = cleanKey;
+    const finalNotes = notes || [
+      city ? `City: ${city}` : '',
+      message ? `Message: ${message}` : ''
+    ].filter(Boolean).join('\n') || null;
+
     const quote = await prisma.quoteRequest.create({
       data: {
-        name,
-        email,
-        phone,
-        serviceKey,
-        sourceLang,
-        targetLang,
+        name: name.trim(),
+        email: email ? email.trim() : null,
+        phone: phone.trim(),
+        serviceKey: finalServiceKey,
+        sourceLang: sourceLang || null,
+        targetLang: targetLang || null,
         pages: parseInt(pages) || 1,
         isInterpreter: Boolean(isInterpreter),
-        notes
+        notes: finalNotes
       }
     });
 
@@ -47,6 +78,11 @@ const updateQuoteStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+    
+    const validStatuses = ['PENDING', 'CONTACTED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status value.' });
+    }
 
     const updated = await prisma.quoteRequest.update({
       where: { id },

@@ -1,4 +1,5 @@
 const express = require('express');
+const { protect } = require('../middleware/auth');
 const {
   getIndustries,
   getAllIndustries,
@@ -13,9 +14,9 @@ const router = express.Router();
 router.get('/', getIndustries);
 
 // Admin routes
-router.get('/all', getAllIndustries);
-router.post('/', createIndustry);
-router.put('/:id', updateIndustry);
-router.delete('/:id', deleteIndustry);
+router.get('/all', protect, getAllIndustries);
+router.post('/', protect, createIndustry);
+router.put('/:id', protect, updateIndustry);
+router.delete('/:id', protect, deleteIndustry);
 
 module.exports = router;

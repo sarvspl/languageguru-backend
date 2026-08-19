@@ -15,7 +15,9 @@ async function main() {
   const existingAdmin = await prisma.adminUser.findUnique({ where: { username: adminUsername } });
 
   if (!existingAdmin) {
-    const passwordHash = await bcrypt.hash('12345678', 10);
+    const crypto = require('crypto');
+    const defaultPassword = process.env.ADMIN_PASSWORD || crypto.randomBytes(6).toString('hex');
+    const passwordHash = await bcrypt.hash(defaultPassword, 10);
     await prisma.adminUser.create({
       data: {
         username: adminUsername,
@@ -24,7 +26,10 @@ async function main() {
         role: 'SUPER_ADMIN'
       }
     });
-    console.log('✅ Created Super Admin user: admin (password: 12345678)');
+    console.log(`✅ Created Super Admin user: admin (password: ${defaultPassword})`);
+    if (!process.env.ADMIN_PASSWORD) {
+      console.log('⚠️  WARNING: A random password was generated. Please change it immediately or set ADMIN_PASSWORD in your environment variables.');
+    }
   }
 
   // 2. Seed Languages

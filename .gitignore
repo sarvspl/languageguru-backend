@@ -5,3 +5,14 @@ build/
 *.log
 check*
 update*
+clean_html.js
+seedWhyChoose.js
+seed_gallery.js
+seedCms.js
+scratch/
+uploads/
+*.db
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+.agents/

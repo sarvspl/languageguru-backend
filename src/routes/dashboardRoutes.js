@@ -1,9 +1,10 @@
 const express = require('express');
 const prisma = require('../config/db');
+const { verifyAdminToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/stats', async (req, res) => {
+router.get('/stats', verifyAdminToken, async (req, res) => {
   try {
     const filter = req.query.filter || 'all';
     const now = new Date();
@@ -155,7 +156,8 @@ router.get('/stats', async (req, res) => {
           apostille: apostilleLeads,
           training: trainingLeads
         },
-        recentOrders
+        recentOrders,
+        recentQuotes: recentOrdersRaw
       }
     });
   } catch (error) {

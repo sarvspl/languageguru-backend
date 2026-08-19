@@ -6,12 +6,19 @@ const prisma = require('../config/db');
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
+    const trimmedUsername = username ? username.trim() : '';
+    console.log('Login attempt received. Username:', `"${trimmedUsername}"`, 'Password length:', password?.length);
 
-    if (!username || !password) {
+    if (!trimmedUsername || !password) {
       return res.status(400).json({ success: false, message: 'Username and password are required.' });
     }
 
-    const admin = await prisma.adminUser.findUnique({ where: { username } });
+    if (!process.env.JWT_SECRET) {
+      console.error('CRITICAL: JWT_SECRET is missing from environment variables.');
+      return res.status(500).json({ success: false, message: 'Internal Server Error: Authentication configuration missing.' });
+    }
+
+    const admin = await prisma.adminUser.findUnique({ where: { username: trimmedUsername } });
     if (!admin) {
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
@@ -22,8 +29,8 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: admin.id, username: admin.username, role: admin.role },
-      process.env.JWT_SECRET || 'languageguru_secret_key_2026_super_secure_jwt',
+      { id: admin.id, username: admin.username, role: admin.role, pwHash: admin.passwordHash.substring(0, 10) },
+      process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 

@@ -21,12 +21,11 @@ const getSettings = async (req, res) => {
   }
 };
 
-// GET /api/v1/settings/public (Public access for frontend)
 const getPublicSettings = async (req, res) => {
   try {
     const settings = await getOrCreateSettings();
-    // Exclude sensitive fields if needed, but for now just send it since we only have public info anyway
-    return res.status(200).json({ success: true, settings });
+    const { gstNumber, panNumber, ...publicSettings } = settings;
+    return res.status(200).json({ success: true, settings: publicSettings });
   } catch (error) {
     console.error('Public Settings GET error:', error);
     return res.status(500).json({ success: false, message: 'Server error.' });
@@ -41,7 +40,11 @@ const updateSettings = async (req, res) => {
       'facebook', 'instagram', 'twitter', 'linkedin', 'youtube',
       'defaultTurnaround', 'pricePerPage', 'gstNumber', 'panNumber',
       'metaTitle', 'metaDesc', 'heroHeading', 'heroSubtitle',
-      'whatsappNumber', 'maintenanceMode'
+      'whatsappNumber', 'maintenanceMode', 'heroBgImage',
+      'bankName', 'bankAccountName', 'bankAccountNo', 'bankIFSC', 'bankBranch', 'upiId', 'paypalEmail',
+      'stat1Value', 'stat1Label', 'stat2Value', 'stat2Label', 'stat3Value', 'stat3Label', 'stat4Value', 'stat4Label',
+      'whyChooseTag', 'whyChooseTitle', 'whyChooseSubtitle',
+      'heroTopBadge', 'heroTopLine', 'heroTrustBadge1', 'heroTrustBadge2', 'heroTrustBadge3', 'heroTrustBadge4'
     ];
 
     const updateData = {};
