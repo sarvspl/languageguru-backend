@@ -9,6 +9,17 @@ const submitQuote = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name and phone are required.' });
     }
 
+    // SEC-08: bound every free-text field. Unbounded `notes` is the natural
+    // target for spam flooding now that the endpoint is public and rate-limited
+    // only per IP.
+    const cap = (v, n) => (typeof v === 'string' ? v.trim().slice(0, n) : v);
+    if (String(name).trim().length > 120 || String(phone).trim().length > 32) {
+      return res.status(400).json({ success: false, message: 'Name or phone is too long.' });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim())) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid email address.' });
+    }
+
     const numericMap = {
       '850': 'Certified Translation',
       '899': 'Website Localization',
@@ -42,15 +53,15 @@ const submitQuote = async (req, res) => {
 
     const quote = await prisma.quoteRequest.create({
       data: {
-        name: name.trim(),
-        email: email ? email.trim() : null,
-        phone: phone.trim(),
-        serviceKey: finalServiceKey,
-        sourceLang: sourceLang || null,
-        targetLang: targetLang || null,
-        pages: parseInt(pages) || 1,
+        name: cap(name, 120),
+        email: email ? cap(email, 160) : null,
+        phone: cap(phone, 32),
+        serviceKey: cap(finalServiceKey, 60),
+        sourceLang: cap(sourceLang, 60) || null,
+        targetLang: cap(targetLang, 60) || null,
+        pages: Math.min(Math.max(parseInt(pages) || 1, 1), 10000),
         isInterpreter: Boolean(isInterpreter),
-        notes: finalNotes
+        notes: cap(finalNotes, 4000)
       }
     });
 
@@ -62,13 +73,41 @@ const submitQuote = async (req, res) => {
 };
 
 // Get all quotes (Admin)
+// BUG-15: paginated. Returning every quote ever created was fine at 50 rows and
+// a multi-megabyte response at 50,000. `all=true` is kept for admin exports.
 const getQuotes = async (req, res) => {
   try {
-    const quotes = await prisma.quoteRequest.findMany({
-      orderBy: { createdAt: 'desc' }
+    const { status, all } = req.query;
+    const where = status ? { status } : {};
+
+    if (all === 'true') {
+      const quotes = await prisma.quoteRequest.findMany({ where, orderBy: { createdAt: 'desc' } });
+      return res.status(200).json({ success: true, data: quotes, total: quotes.length });
+    }
+
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 50, 1), 200);
+
+    const [quotes, total] = await Promise.all([
+      prisma.quoteRequest.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      prisma.quoteRequest.count({ where })
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: quotes,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1
     });
-    return res.status(200).json({ success: true, data: quotes });
   } catch (error) {
+    console.error('getQuotes error:', error);
     return res.status(500).json({ success: false, message: 'Failed to fetch quote requests.' });
   }
 };
@@ -91,6 +130,10 @@ const updateQuoteStatus = async (req, res) => {
 
     return res.status(200).json({ success: true, data: updated });
   } catch (error) {
+    if (error && error.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Quote request not found.' });
+    }
+    console.error('updateQuoteStatus error:', error);
     return res.status(500).json({ success: false, message: 'Failed to update quote status.' });
   }
 };
@@ -102,6 +145,10 @@ const deleteQuote = async (req, res) => {
     await prisma.quoteRequest.delete({ where: { id } });
     return res.status(200).json({ success: true, message: 'Quote deleted successfully.' });
   } catch (error) {
+    if (error && error.code === 'P2025') {
+      return res.status(404).json({ success: false, message: 'Quote request not found.' });
+    }
+    console.error('deleteQuote error:', error);
     return res.status(500).json({ success: false, message: 'Failed to delete quote.' });
   }
 };

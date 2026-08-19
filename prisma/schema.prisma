@@ -8,13 +8,14 @@ datasource db {
 }
 
 model AdminUser {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  passwordHash String
-  name         String?
-  role         String   @default("ADMIN")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String   @id @default(uuid())
+  username          String   @unique
+  passwordHash      String
+  name              String?
+  role              String   @default("ADMIN")
+  passwordChangedAt DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
 
 model Language {
@@ -43,50 +44,57 @@ model Language {
 }
 
 model City {
-  id        String   @id @default(uuid())
-  key       String   @unique
-  name      String
-  ic        String?
-  isMetro   Boolean  @default(false)
-  state     String?
-  metaTitle String?
-  metaDesc  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(uuid())
+  key              String   @unique
+  name             String
+  ic               String?
+  isMetro          Boolean  @default(false)
+  state            String?
+  metaTitle        String?
+  metaDesc         String?
+  // CMS-03: parity with Language and Service, whose detail pages were already
+  // overridable. City detail pages had no CMS surface at all.
+  contentOverrides Json?
+  faqs             Json?
+  reviews          Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  isActive         Boolean  @default(true)
 }
 
 model Service {
-  id          String   @id @default(uuid())
-  key         String   @unique
-  name        String
-  icon        String
-  short       String?
-  price       Float?
-  fast        Int?
-  label       String?
-  tag         String?
-  title       String?
-  alt         Boolean?
-  p1          String?
-  p2          String?
-  features    String[]
-  docs        String[]
-  ctaLabel    String?
-  ctaKey      String?
-  description String?
-  metaTitle   String?
-  metaDesc    String?
-    faqs        Json?
-    reviews     Json?
+  id               String   @id @default(uuid())
+  key              String   @unique
+  name             String
+  icon             String
+  short            String?
+  price            Float?
+  fast             Int?
+  label            String?
+  tag              String?
+  title            String?
+  alt              Boolean?
+  p1               String?
+  p2               String?
+  features         String[]
+  docs             String[]
+  ctaLabel         String?
+  ctaKey           String?
+  description      String?
+  metaTitle        String?
+  metaDesc         String?
+  faqs             Json?
+  reviews          Json?
   contentOverrides Json?
-  certLang    String?
-  certDoc     String?
-  certFlag    String?
-  certAcc     String?
-  certTime    String?
-  certIcon    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  certLang         String?
+  certDoc          String?
+  certFlag         String?
+  certAcc          String?
+  certTime         String?
+  certIcon         String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  isActive         Boolean  @default(true)
 }
 
 model QuoteRequest {
@@ -151,6 +159,7 @@ model SiteSettings {
   id                String   @id @default("singleton") // Only one record ever
   // Company Info
   companyName       String   @default("Language Guru")
+  logoUrl           String   @default("/logo.jpg")
   tagline           String   @default("India's #1 Certified Translation Agency")
   phone             String   @default("+91-9312690490")
   email             String   @default("info@languageguruindia.com")
@@ -329,91 +338,149 @@ model AboutPage {
 }
 
 model ContactPage {
-  id              String   @id @default("singleton")
+  id              String @id @default("singleton")
   // Hero Header
-  heroTitle       String   @default("📞 Contact Us")
-  heroSubtitle    String   @default("Reach out via call, WhatsApp, email or visit our office. Response in 30 minutes.")
-  heroCallBtnText String   @default("📞 Call Now")
-  heroWaBtnText   String   @default("💬 WhatsApp")
+  heroTitle       String @default("📞 Contact Us")
+  heroSubtitle    String @default("Reach out via call, WhatsApp, email or visit our office. Response in 30 minutes.")
+  heroCallBtnText String @default("📞 Call Now")
+  heroWaBtnText   String @default("💬 WhatsApp")
   // Top 3 Contact Cards
-  card1Icon       String   @default("📞")
-  card1Title      String   @default("Call / WhatsApp")
-  card1Phone      String   @default("+91-9312690490")
-  card1Timing     String   @default("Mon–Sat: 9 AM – 7 PM • Sun: 10 AM – 4 PM")
-  card1BtnText    String   @default("💬 WhatsApp Now")
-  
-  card2Icon       String   @default("✉️")
-  card2Title      String   @default("Email Us")
-  card2Email      String   @default("info@languageguruindia.com")
-  card2Timing     String   @default("Response within 1 hour during working hours")
-  card2BtnText    String   @default("✉️ Send Email")
-  
-  card3Icon       String   @default("📍")
-  card3Title      String   @default("Visit Our Office")
-  card3Address    String   @default("617, West End Mall, Janakpuri, New Delhi – 110058")
-  card3BtnText    String   @default("📍 Get Directions")
-  mapUrl          String   @default("")
-  
+  card1Icon       String @default("📞")
+  card1Title      String @default("Call / WhatsApp")
+  card1Phone      String @default("+91-9312690490")
+  card1Timing     String @default("Mon–Sat: 9 AM – 7 PM • Sun: 10 AM – 4 PM")
+  card1BtnText    String @default("💬 WhatsApp Now")
+
+  card2Icon    String @default("✉️")
+  card2Title   String @default("Email Us")
+  card2Email   String @default("info@languageguruindia.com")
+  card2Timing  String @default("Response within 1 hour during working hours")
+  card2BtnText String @default("✉️ Send Email")
+
+  card3Icon    String @default("📍")
+  card3Title   String @default("Visit Our Office")
+  card3Address String @default("617, West End Mall, Janakpuri, New Delhi – 110058")
+  card3BtnText String @default("📍 Get Directions")
+  mapUrl       String @default("")
+
   // Form Details
-  formTitle       String   @default("Send Us a Message")
-  formBtnText     String   @default("📬 Send Message")
-  formNote1       String   @default("*Indicative rates only; final charges may vary by language pair, document type, complexity & number of pages.")
-  formNote2       String   @default("🔒 Secure & confidential · Response in 30 minutes")
-  
+  formTitle   String @default("Send Us a Message")
+  formBtnText String @default("📬 Send Message")
+  formNote1   String @default("*Indicative rates only; final charges may vary by language pair, document type, complexity & number of pages.")
+  formNote2   String @default("🔒 Secure & confidential · Response in 30 minutes")
+
   // Working Hours & Emergency
-  hoursTitle      String   @default("⏱️ Working Hours")
-  hoursMonFri     String   @default("9:00 AM — 7:00 PM")
-  hoursSat        String   @default("10:00 AM — 6:00 PM")
-  hoursSun        String   @default("10:00 AM — 4:00 PM")
-  urgentText      String   @default("🆘 Urgent: WhatsApp 24/7 at +91-9312690490")
-  
+  hoursTitle  String @default("⏱️ Working Hours")
+  hoursMonFri String @default("9:00 AM — 7:00 PM")
+  hoursSat    String @default("10:00 AM — 6:00 PM")
+  hoursSun    String @default("10:00 AM — 4:00 PM")
+  urgentText  String @default("🆘 Urgent: WhatsApp 24/7 at +91-9312690490")
+
   // Accreditations Sidebar
-  certsTitle      String   @default("🏆 Certifications")
-  certsList       String   @default("[\"🏅 ISO 9001:2015\", \"🏅 ISO 17100:2015\", \"🏆 MSME Registered\", \"🏛️ Govt. Authorized\", \"🏛️ MEA Empanelled\", \"⭐ 4.9/5 Rating\"]")
-  
+  certsTitle String @default("🏆 Certifications")
+  certsList  String @default("[\"🏅 ISO 9001:2015\", \"🏅 ISO 17100:2015\", \"🏆 MSME Registered\", \"🏛️ Govt. Authorized\", \"🏛️ MEA Empanelled\", \"⭐ 4.9/5 Rating\"]")
+
   // SEO Metadata
-  metaTitle       String   @default("Contact Us — Language Guru")
-  metaDesc        String   @default("Contact Language Guru: 617 West End Mall, Janakpuri, New Delhi. Phone, email and WhatsApp.")
-  updatedAt       DateTime @updatedAt
+  metaTitle String   @default("Contact Us — Language Guru")
+  metaDesc  String   @default("Contact Language Guru: 617 West End Mall, Janakpuri, New Delhi. Phone, email and WhatsApp.")
+  updatedAt DateTime @updatedAt
 }
 
 model ClientsPage {
-  id              String   @id @default("singleton")
+  id           String @id @default("singleton")
   // Hero Section
-  heroTitle       String   @default("Our Clients & Partners")
-  heroSubtitle    String   @default("10,000+ satisfied clients across India — law firms, hospitals, embassies and Fortune 500 companies")
-  
+  heroTitle    String @default("Our Clients & Partners")
+  heroSubtitle String @default("10,000+ satisfied clients across India — law firms, hospitals, embassies and Fortune 500 companies")
+
   // 4 Stats Counters
-  stat1Val        String   @default("10,000+")
-  stat1Label      String   @default("Happy Clients")
-  stat2Val        String   @default("500+")
-  stat2Label      String   @default("Corporate Clients")
-  stat3Val        String   @default("190+")
-  stat3Label      String   @default("Countries Served")
-  stat4Val        String   @default("4.9★")
-  stat4Label      String   @default("Average Rating")
-  
+  stat1Val   String @default("10,000+")
+  stat1Label String @default("Happy Clients")
+  stat2Val   String @default("500+")
+  stat2Label String @default("Corporate Clients")
+  stat3Val   String @default("190+")
+  stat3Label String @default("Countries Served")
+  stat4Val   String @default("4.9★")
+  stat4Label String @default("Average Rating")
+
   // Industries We Serve
-  industriesTitle String   @default("Industries We Serve")
-  industriesList  String   @default("[]")
-  
+  industriesTitle String @default("Industries We Serve")
+  industriesList  String @default("[]")
+
   // Valued Clients Grid
-  clientsTitle    String   @default("Our Valued Clients")
-  clientsList     String   @default("[]")
-  
+  clientsTitle String @default("Our Valued Clients")
+  clientsList  String @default("[]")
+
   // Testimonials Section
-  reviewsTitle    String   @default("What Our Clients Say")
-  reviewsList     String   @default("[]")
+  reviewsTitle String @default("What Our Clients Say")
+  reviewsList  String @default("[]")
 
   // Bottom CTA
-  ctaTitle        String   @default("Join 10,000+ Satisfied Clients")
-  ctaSubtitle     String   @default("ISO-certified translation. Embassy acceptance guaranteed. Quote in 30 minutes.")
-  ctaBtnText      String   @default("📋 Get Free Quote")
-  
+  ctaTitle    String @default("Join 10,000+ Satisfied Clients")
+  ctaSubtitle String @default("ISO-certified translation. Embassy acceptance guaranteed. Quote in 30 minutes.")
+  ctaBtnText  String @default("📋 Get Free Quote")
+
   // SEO Metadata
-  metaTitle       String   @default("Our Clients & Partners — Language Guru")
-  metaDesc        String   @default("Language Guru is trusted by 10,000+ clients across India including ministries, high courts, AIIMS, IITs, and Fortune 500 companies.")
-  updatedAt       DateTime @updatedAt
+  metaTitle String   @default("Our Clients & Partners — Language Guru")
+  metaDesc  String   @default("Language Guru is trusted by 10,000+ clients across India including ministries, high courts, AIIMS, IITs, and Fortune 500 companies.")
+  updatedAt DateTime @updatedAt
 }
 
+// ─── Universal page + section CMS ───────────────────────────────────────────
+// SitePage gives every route an admin-editable slug, nav label and SEO block.
+// `key` is the immutable identifier the code resolves against; `slug` is what
+// appears in the URL and may be changed freely from the dashboard.
+model SitePage {
+  id            String        @id @default(uuid())
+  key           String        @unique
+  slug          String        @unique
+  title         String
+  navLabel      String?
+  heroTag       String?
+  heroTitle     String?
+  heroSubtitle  String?
+  heroImage     String?
+  metaTitle     String?
+  metaDesc      String?
+  metaKeywords  String?
+  ogImage       String?
+  showInNav     Boolean       @default(false)
+  showInFooter  Boolean       @default(false)
+  showInSitemap Boolean       @default(true)
+  isActive      Boolean       @default(true)
+  sortOrder     Int           @default(0)
+  sections      PageSection[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
+  @@index([slug])
+}
+
+// Every band of every page. `items` carries repeatable content — card grids,
+// process steps, comparison rows, FAQ pairs, dropdown option lists — so a new
+// kind of section needs no schema change.
+model PageSection {
+  id          String   @id @default(uuid())
+  pageKey     String
+  page        SitePage @relation(fields: [pageKey], references: [key], onDelete: Cascade)
+  sectionKey  String
+  kind        String   @default("richtext")
+  tag         String?
+  heading     String?
+  subheading  String?
+  body        String?
+  layout      String   @default("text-only")
+  imageUrl    String?
+  buttonText  String?
+  buttonLink  String?
+  button2Text String?
+  button2Link String?
+  items       Json?
+  settings    Json?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([pageKey, sectionKey])
+  @@index([pageKey, sortOrder])
+}

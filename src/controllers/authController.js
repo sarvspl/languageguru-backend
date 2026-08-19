@@ -7,7 +7,6 @@ const login = async (req, res) => {
   try {
     const { username, password } = req.body;
     const trimmedUsername = username ? username.trim() : '';
-    console.log('Login attempt received. Username:', `"${trimmedUsername}"`, 'Password length:', password?.length);
 
     if (!trimmedUsername || !password) {
       return res.status(400).json({ success: false, message: 'Username and password are required.' });

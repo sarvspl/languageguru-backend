@@ -24,6 +24,7 @@ const whyChooseRoutes = require('./routes/whyChooseRoutes');
 const aboutRoutes = require('./routes/aboutRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const clientsPageRoutes = require('./routes/clientsPageRoutes');
+const sitePageRoutes = require('./routes/sitePageRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -40,6 +41,9 @@ const loginLimiter = rateLimit({
   max: 10, // Limit each IP to 10 login requests per windowMs
   message: { success: false, message: 'Too many login attempts, please try again after 15 minutes' }
 });
+// Reserved for any future unauthenticated write endpoint. Submission routes are
+// throttled at the router level instead - see quoteRoutes.js.
+// eslint-disable-next-line no-unused-vars
 const apiLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 50, // Limit each IP to 50 public requests per windowMs
@@ -80,6 +84,11 @@ app.get('/api/health', (req, res) => {
 
 // API Routes
 app.use('/api/v1/auth/login', loginLimiter);
+// SEC-08: quote/contact submission is throttled by `submitLimiter` inside
+// quoteRoutes.js (30 per 15 min), which is stricter than apiLimiter. Do NOT put
+// apiLimiter on /api/v1/contact - that route serves the contact page's CMS
+// content on every page load, so throttling it per IP breaks normal browsing
+// for anyone behind shared NAT.
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/languages', languageRoutes);
 app.use('/api/v1/quotes', quoteRoutes);
@@ -99,14 +108,24 @@ app.use('/api/v1/why-choose', whyChooseRoutes);
 app.use('/api/v1/about', aboutRoutes);
 app.use('/api/v1/contact', contactRoutes);
 app.use('/api/v1/clients-page', clientsPageRoutes);
+app.use('/api/v1/site-pages', sitePageRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 
 // Serve uploads folder statically
 const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// CFG-09: unmatched API routes must return JSON, not Express's HTML error page,
+// so client-side error handling can parse the response.
+app.use('/api', (req, res) => {
+  res.status(404).json({ success: false, message: `Route not found: ${req.method} ${req.originalUrl}` });
+});
+
 // Global Error Handler
 app.use((err, req, res, next) => {
+  if (err && /Not allowed by CORS/.test(err.message || '')) {
+    return res.status(403).json({ success: false, message: 'Origin not allowed.' });
+  }
   console.error('Unhandled Error:', err);
   res.status(500).json({ success: false, message: 'Internal Server Error' });
 });

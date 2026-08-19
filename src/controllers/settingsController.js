@@ -36,7 +36,7 @@ const getPublicSettings = async (req, res) => {
 const updateSettings = async (req, res) => {
   try {
     const allowedFields = [
-      'companyName', 'tagline', 'phone', 'email', 'address', 'website',
+      'companyName', 'logoUrl', 'tagline', 'phone', 'email', 'address', 'website',
       'facebook', 'instagram', 'twitter', 'linkedin', 'youtube',
       'defaultTurnaround', 'pricePerPage', 'gstNumber', 'panNumber',
       'metaTitle', 'metaDesc', 'heroHeading', 'heroSubtitle',
@@ -76,8 +76,11 @@ const changePassword = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Both current and new password are required.' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters.' });
+    if (newPassword.length < 12) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 12 characters.' });
+    }
+    if (!/[a-z]/.test(newPassword) || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      return res.status(400).json({ success: false, message: 'New password must contain upper case, lower case and a number.' });
     }
 
     // Find the admin user
@@ -103,12 +106,25 @@ const changePassword = async (req, res) => {
       where: { id: req.admin.id },
       data: {
         passwordHash: newHash,
+        passwordChangedAt: new Date(),
         ...(username && username !== admin.username ? { username } : {})
       }
     });
 
+    // SEC-10: drop the current session; verifyAdminToken now rejects any token
+    // issued before passwordChangedAt, so every other device is logged out too.
+    res.clearCookie('admin_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      path: '/'
+    });
+
     return res.status(200).json({ success: true, message: 'Password updated successfully! Please log in again.' });
   } catch (error) {
+    if (error && error.code === 'P2002') {
+      return res.status(409).json({ success: false, message: 'That username is already taken.' });
+    }
     console.error('Change password error:', error);
     return res.status(500).json({ success: false, message: 'Server error.' });
   }

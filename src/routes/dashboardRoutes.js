@@ -29,29 +29,55 @@ router.get('/stats', verifyAdminToken, async (req, res) => {
 
     const whereClause = dateFilter ? { createdAt: dateFilter } : {};
 
-    const totalQuotes = await prisma.quoteRequest.count({ where: whereClause });
-    const pendingQuotes = await prisma.quoteRequest.count({ where: { ...whereClause, status: 'PENDING' } });
-    
-    const totalLanguages = await prisma.language.count();
-    const totalCities = await prisma.city.count();
-    const totalServices = await prisma.service.count();
+    // CFG-08: these queries are independent of one another; running them
+    // sequentially cost 10+ round trips per dashboard load.
+    const [
+      totalQuotes,
+      pendingQuotes,
+      totalLanguages,
+      totalCities,
+      totalServices,
+      completedOrders,
+      settings,
+      completedQuotes,
+      serviceRows
+    ] = await Promise.all([
+      prisma.quoteRequest.count({ where: whereClause }),
+      prisma.quoteRequest.count({ where: { ...whereClause, status: 'PENDING' } }),
+      prisma.language.count(),
+      prisma.city.count(),
+      prisma.service.count(),
+      prisma.quoteRequest.count({ where: { ...whereClause, status: 'COMPLETED' } }),
+      prisma.siteSettings.findUnique({ where: { id: 'singleton' } }),
+      prisma.quoteRequest.findMany({
+        where: { ...whereClause, status: 'COMPLETED' },
+        select: { pages: true, createdAt: true, serviceKey: true, isInterpreter: true },
+        orderBy: { createdAt: 'asc' }
+      }),
+      prisma.service.findMany({ select: { key: true, name: true, price: true } })
+    ]);
 
-    const completedOrders = await prisma.quoteRequest.count({
-      where: { ...whereClause, status: 'COMPLETED' }
-    });
-
-    const settings = await prisma.siteSettings.findUnique({ where: { id: 'singleton' } });
     const pricePerPage = settings?.pricePerPage || 850;
 
-    const completedQuotes = await prisma.quoteRequest.findMany({
-      where: { ...whereClause, status: 'COMPLETED' },
-      select: { pages: true, createdAt: true },
-      orderBy: { createdAt: 'asc' }
+    // BUG-12: value each completed quote at its own service rate. Charging a
+    // ₹7,500/day interpreting job at the flat page rate understated revenue.
+    const priceByKey = new Map();
+    serviceRows.forEach(sv => {
+      if (sv.price == null) return;
+      if (sv.key) priceByKey.set(String(sv.key).toLowerCase(), sv.price);
+      if (sv.name) priceByKey.set(String(sv.name).toLowerCase(), sv.price);
     });
-    
+    const quoteValue = (q) => {
+      const key = (q.serviceKey || '').toLowerCase().trim();
+      const unitPrice = priceByKey.get(key) ?? pricePerPage;
+      // Interpreting is billed per day, not per page.
+      const units = q.isInterpreter ? Math.max(q.pages || 1, 1) : (q.pages || 0);
+      return units * unitPrice;
+    };
+
     let revenue = 0;
     completedQuotes.forEach(q => {
-      revenue += (q.pages || 0) * pricePerPage;
+      revenue += quoteValue(q);
     });
 
     let chartLabels = [];
@@ -68,7 +94,7 @@ router.get('/stats', verifyAdminToken, async (req, res) => {
         const diffTime = now.getTime() - q.createdAt.getTime();
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         if (diffDays <= 6 && diffDays >= 0) {
-          chartValues[6 - diffDays] += (q.pages || 0) * pricePerPage;
+          chartValues[6 - diffDays] += quoteValue(q);
         }
       });
     } else if (filter === 'monthly') {
@@ -80,7 +106,7 @@ router.get('/stats', verifyAdminToken, async (req, res) => {
         if (diffDays <= 30 && diffDays >= 0) {
           let weekIdx = Math.floor(diffDays / 7);
           if (weekIdx > 3) weekIdx = 3;
-          chartValues[3 - weekIdx] += (q.pages || 0) * pricePerPage;
+          chartValues[3 - weekIdx] += quoteValue(q);
         }
       });
     } else {
@@ -92,27 +118,29 @@ router.get('/stats', verifyAdminToken, async (req, res) => {
       completedQuotes.forEach(q => {
         const diffMonths = (now.getFullYear() - q.createdAt.getFullYear()) * 12 + (now.getMonth() - q.createdAt.getMonth());
         if (diffMonths <= 11 && diffMonths >= 0) {
-          chartValues[11 - diffMonths] += (q.pages || 0) * pricePerPage;
+          chartValues[11 - diffMonths] += quoteValue(q);
         }
       });
     }
 
-    const translationLeads = await prisma.quoteRequest.count({
-      where: { ...whereClause, isInterpreter: false, serviceKey: { notIn: ['apostille', 'attestation', 'training'] } }
-    });
-    const interpreterLeads = await prisma.quoteRequest.count({
-      where: { ...whereClause, isInterpreter: true }
-    });
-    const apostilleLeads = await prisma.quoteRequest.count({
-      where: { ...whereClause, serviceKey: { in: ['apostille', 'attestation'] } }
-    });
-    const trainingLeads = await prisma.quoteRequest.count({
-      where: { ...whereClause, serviceKey: { contains: 'training' } }
-    });
+    // BUG-13: the old version mixed an exact `notIn` with a substring `contains`,
+    // so a key like "training-basic" was counted as both translation and training
+    // and the four buckets did not sum to the total. Classify each row once.
+    const [routingRows, recentOrdersRaw] = await Promise.all([
+      prisma.quoteRequest.findMany({
+        where: whereClause,
+        select: { serviceKey: true, isInterpreter: true }
+      }),
+      prisma.quoteRequest.findMany({ orderBy: { createdAt: 'desc' }, take: 5 })
+    ]);
 
-    const recentOrdersRaw = await prisma.quoteRequest.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 5
+    const leadRouting = { translation: 0, interpreter: 0, apostille: 0, training: 0 };
+    routingRows.forEach(q => {
+      const key = (q.serviceKey || '').toLowerCase();
+      if (q.isInterpreter) leadRouting.interpreter++;
+      else if (key.includes('training')) leadRouting.training++;
+      else if (key.includes('apostille') || key.includes('attestation')) leadRouting.apostille++;
+      else leadRouting.translation++;
     });
 
     const recentOrders = recentOrdersRaw.map(q => {
@@ -130,7 +158,7 @@ router.get('/stats', verifyAdminToken, async (req, res) => {
         o: `ORD-${q.createdAt.getFullYear()}-${q.id.substring(0, 5).toUpperCase()}`,
         l: langText,
         p: `${q.pages} pg`,
-        a: `₹${(q.pages * pricePerPage).toLocaleString('en-IN')}`,
+        a: `₹${quoteValue(q).toLocaleString('en-IN')}`,
         s: q.status.replace('_', ' '),
         sc: colors.sc,
         tc: colors.tc,
@@ -150,12 +178,7 @@ router.get('/stats', verifyAdminToken, async (req, res) => {
         revenue,
         chartLabels,
         chartValues,
-        leadRouting: {
-          translation: translationLeads,
-          interpreter: interpreterLeads,
-          apostille: apostilleLeads,
-          training: trainingLeads
-        },
+        leadRouting,
         recentOrders,
         recentQuotes: recentOrdersRaw
       }

@@ -8,7 +8,11 @@
     "start": "node src/app.js",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
-    "prisma:seed": "tsx prisma/seed.ts"
+    "prisma:seed": "tsx prisma/seed.ts",
+    "seed:admin": "tsx prisma/seed.ts",
+    "seed:catalog": "tsx prisma/seedCatalog.ts",
+    "seed:content": "tsx prisma/seedContent.ts",
+    "seed:all": "tsx prisma/seedAll.ts"
   },
   "keywords": [
     "express",

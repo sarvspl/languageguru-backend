@@ -1,13 +1,18 @@
 const prisma = require('../config/db');
 
 // Get all services
+// BUG-10: the public site must only ever see published services, so a service can
+// be taken off the site by deactivating it rather than deleting it (which orphans
+// the QuoteRequest.serviceKey rows that reference it).
 const getServices = async (req, res) => {
   try {
     const services = await prisma.service.findMany({
+      where: { isActive: true },
       orderBy: { name: 'asc' }
     });
     res.status(200).json({ success: true, data: services });
   } catch (error) {
+    console.error('getServices error:', error);
     res.status(500).json({ success: false, message: 'Server error fetching services.' });
   }
 };
@@ -20,13 +25,14 @@ const getAllServices = async (req, res) => {
     });
     res.status(200).json({ success: true, data: services });
   } catch (error) {
+    console.error('getAllServices error:', error);
     res.status(500).json({ success: false, message: 'Server error fetching services.' });
   }
 };
 
 const createService = async (req, res) => {
   try {
-    const { key, name, icon, short, price, fast, label, tag, title, alt, p1, p2, features, docs, ctaLabel, ctaKey, description, certLang, certDoc, certFlag, certAcc, certTime, certIcon, metaTitle, metaDesc, faqs, reviews, contentOverrides } = req.body;
+    const { key, name, icon, short, price, fast, label, tag, title, alt, p1, p2, features, docs, ctaLabel, ctaKey, description, certLang, certDoc, certFlag, certAcc, certTime, certIcon, metaTitle, metaDesc, faqs, reviews, contentOverrides, isActive } = req.body;
 
     if (!key || !name) {
       return res.status(400).json({ success: false, message: 'Key and name are required.' });
@@ -43,7 +49,8 @@ const createService = async (req, res) => {
         features: features || [],
         docs: docs || [],
         certLang, certDoc, certFlag, certAcc, certTime, certIcon, metaTitle, metaDesc, faqs, reviews,
-        contentOverrides: contentOverrides || {}
+        contentOverrides: contentOverrides || {},
+        isActive: isActive !== undefined ? isActive : true
       }
     });
     res.status(201).json({ success: true, data: service });
@@ -56,7 +63,7 @@ const createService = async (req, res) => {
 const updateService = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, icon, short, price, fast, label, tag, title, alt, p1, p2, features, docs, ctaLabel, ctaKey, description, certLang, certDoc, certFlag, certAcc, certTime, certIcon, metaTitle, metaDesc, faqs, reviews, contentOverrides } = req.body;
+    const { name, icon, short, price, fast, label, tag, title, alt, p1, p2, features, docs, ctaLabel, ctaKey, description, certLang, certDoc, certFlag, certAcc, certTime, certIcon, metaTitle, metaDesc, faqs, reviews, contentOverrides, isActive } = req.body;
 
     const existing = await prisma.service.findUnique({ where: { id } });
     if (!existing) {
@@ -92,6 +99,8 @@ const updateService = async (req, res) => {
     };
     if (features !== undefined) dataToUpdate.features = features;
     if (docs !== undefined) dataToUpdate.docs = docs;
+    // BUG-10: without this the isActive flag could never be turned off.
+    if (isActive !== undefined) dataToUpdate.isActive = isActive;
 
     const service = await prisma.service.update({
       where: { id },
@@ -116,6 +125,7 @@ const deleteService = async (req, res) => {
     await prisma.service.delete({ where: { id } });
     res.status(200).json({ success: true, message: 'Service deleted successfully.' });
   } catch (error) {
+    console.error('deleteService error:', error);
     res.status(500).json({ success: false, message: 'Server error deleting service.' });
   }
 };
