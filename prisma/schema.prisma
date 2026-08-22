@@ -493,3 +493,273 @@ model PageSection {
   @@unique([pageKey, sectionKey])
   @@index([pageKey, sortOrder])
 }
+
+// ═══════════════════════════════════════════════════════════════
+// Service + City Localized Page Overrides
+// Every Service × City combination can have its own full content,
+// custom slug, and SEO metadata. If a field is null the frontend
+// falls back to the base Service template with {city} replaced.
+// ═══════════════════════════════════════════════════════════════
+model ServiceCityOverride {
+  id               String   @id @default(uuid())
+  serviceKey       String
+  cityKey          String
+
+  // URL & SEO
+  slug             String   @unique
+  metaTitle        String?
+  metaDesc         String?
+  metaKeywords     String?
+  ogImage          String?
+
+  // Hero Section
+  heroBadge        String?
+  heroTitle        String?
+  heroSub          String?
+  heroBgImage      String?
+  heroIso          String?
+  heroBtn1Text     String?
+  heroBtn1Link     String?
+  heroBtn2Text     String?
+  heroBtn2Phone    String?
+  heroBtn3Text     String?
+  heroBtn3WA       String?
+  heroBadgesList   String?
+
+  // About / Main Copy
+  title            String?
+  label            String?
+  p1               String?
+  p2               String?
+  aboutTitle       String?
+  agencyOfficeTitle String?
+  officeAddressText String?
+
+  // Process Steps
+  processTag       String?
+  processTitle     String?
+  step1Title       String?
+  step1Desc        String?
+  step2Title       String?
+  step2Desc        String?
+  step3Title       String?
+  step3Desc        String?
+  step4Title       String?
+  step4Desc        String?
+  step5Title       String?
+  step5Desc        String?
+
+  // Comparison Table Headers
+  diffCol0Header   String?
+  diffCol1Header   String?
+  diffCol2Header   String?
+
+  // Pricing
+  tier1Name        String?
+  tier1Price       String?
+  tier1Unit        String?
+  tier1Delivery    String?
+  tier2Name        String?
+  tier2Badge       String?
+  tier2Price       String?
+  tier2Unit        String?
+  tier2Delivery    String?
+  tier3Name        String?
+  tier3Price       String?
+  tier3Unit        String?
+  tier3Delivery    String?
+  currencySymbol   String?
+  pricingAddons    String?
+  includesTitle    String?
+
+  // Section Headings
+  whyChooseTitle   String?
+  otherSvcsSubtitle String?
+  certSampleSubtitle String?
+  allLanguagesTitle String?
+  certificationsTitle String?
+  ctaTitle         String?
+  ctaSubtitle      String?
+
+  // Sidebar
+  sidebarPhone1    String?
+  sidebarPhone2    String?
+  sidebarBtn1Text  String?
+  sidebarBtn1Link  String?
+  sidebarBtn2Text  String?
+  sidebarBtn2WA    String?
+  sidebarCtaTitle  String?
+  sidebarCitiesTitle String?
+  sidebarLangsTitle String?
+  sidebarOtherSvcsTitle String?
+
+  // Rich JSON: arrays of cards, steps, certs, FAQs, reviews, etc.
+  contentOverrides Json?
+  // contentOverrides shape:
+  // {
+  //   aboutParagraphs: string[],
+  //   agencyParagraphs: string[],
+  //   processSteps: [{icon,title,desc,delivery}],
+  //   diffRows: [{feat,std,our}],
+  //   docCategories: [{id,name,icon,color,panelTitle,panelSub,docs,ctaText,ctaBtn}],
+  //   pricingTiers: [{name,badge,price,unit,delivery,features:[]}],
+  //   includesItems: string[],
+  //   whyChooseList: [{icon,title,desc}],
+  //   sampleCertsList: [{doc,lang,flag,seal,acc,time,icon}],
+  //   otherServicesList: [{icon,name,desc,link}],
+  //   reviewsList: [{stars,text,name,role,avatar}],
+  //   faqs: [{q,a}]
+  // }
+
+  faqs             Json?
+  reviews          Json?
+
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([serviceKey, cityKey])
+  @@index([slug])
+  @@index([serviceKey])
+  @@index([cityKey])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Language + City Localized Page Overrides
+// Every Language × City combination has its own dedicated URL,
+// custom slug, SEO metadata, and full section-by-section content.
+// If a field is null the frontend uses the base Language template
+// with {city} / {language} placeholders replaced dynamically.
+// ═══════════════════════════════════════════════════════════════
+model LanguageCityOverride {
+  id               String   @id @default(uuid())
+  languageKey      String
+  cityKey          String
+
+  // URL & SEO
+  slug             String   @unique
+  metaTitle        String?
+  metaDesc         String?
+  metaKeywords     String?
+  ogImage          String?
+
+  // Hero Section
+  heroBadge        String?
+  heroTitle        String?
+  heroSub          String?
+  heroBgImage      String?
+  heroFlag         String?
+  heroIso          String?
+  heroBtn1Text     String?
+  heroBtn1Link     String?
+  heroBtn2Text     String?
+  heroBtn2Phone    String?
+  heroBtn3Text     String?
+  heroBtn3WA       String?
+  heroBadgesList   String?
+
+  // Core Text / Main Copy
+  title            String?
+  p1               String?
+  p2               String?
+  aboutTitle       String?
+  agencyTitle      String?
+  agencyOfficeTitle String?
+  officeAddressText String?
+
+  // Process Steps
+  processTag       String?
+  processTitle     String?
+  step1Title       String?
+  step1Desc        String?
+  step2Title       String?
+  step2Desc        String?
+  step3Title       String?
+  step3Desc        String?
+  step4Title       String?
+  step4Desc        String?
+  step5Title       String?
+  step5Desc        String?
+
+  // Pricing (3 tiers)
+  tier1Name        String?
+  tier1Price       String?
+  tier1Unit        String?
+  tier1Delivery    String?
+  tier2Name        String?
+  tier2Badge       String?
+  tier2Price       String?
+  tier2Unit        String?
+  tier2Delivery    String?
+  tier3Name        String?
+  tier3Price       String?
+  tier3Unit        String?
+  tier3Delivery    String?
+  currencySymbol   String?
+  pricingAddons    String?
+
+  // Section Headings
+  pricingTitle     String?
+  whyChooseTitle   String?
+  reviewsTitle     String?
+  faqsTitle        String?
+  ctaTitle         String?
+  ctaSubtitle      String?
+  docsTitle        String?
+  docsSubtitle     String?
+  certSampleTitle  String?
+  certSampleSubtitle String?
+  interpTitle      String?
+  servicesTitle    String?
+  industriesTitle  String?
+
+  // Sidebar
+  sidebarPhone1    String?
+  sidebarPhone2    String?
+  sidebarBtn1Text  String?
+  sidebarBtn1Link  String?
+  sidebarBtn2Text  String?
+  sidebarBtn2WA    String?
+  sidebarCtaTitle  String?
+  sidebarCitiesTitle String?
+  sidebarLangsTitle String?
+  sidebarOtherSvcsTitle String?
+
+  // Rich JSON: arrays of items, steps, cards, FAQs, reviews, section ordering, custom sections
+  contentOverrides Json?
+  // contentOverrides shape:
+  // {
+  //   introParagraphs: string[],
+  //   legalParagraphs: string[],
+  //   officialParagraphs: string[],
+  //   certifiedParagraphs: string[],
+  //   agencyParagraphs: string[],
+  //   interpParagraphs: string[],
+  //   docCategories: [{id,name,icon,color,panelTitle,panelSub,docs,ctaText,ctaBtn}],
+  //   pricingTiers: [{name,badge,price,unit,delivery,feats:string}],
+  //   sampleCertsList: [{doc,lang,flag,seal,acc,time,icon}],
+  //   servicesCards: [{icon,name,desc,link}],
+  //   processSteps: [{step,title,desc}],
+  //   industryItems: [{icon,name,desc}],
+  //   whyChooseList: [{icon,title,desc}],
+  //   trustCards: {trustCard1..trustCard6},
+  //   reviewsList: [{stars,text,name,role,avatar}],
+  //   faqsList: [{q,a}],
+  //   sectionOrder: string[],
+  //   hiddenSections: string[],
+  //   customSections: [{id,title,subtitle,paragraphs,boxes,highlightBanner,ctaText,ctaBtnText,ctaBtnLink,insertedAfter}]
+  // }
+
+  faqs             Json?
+  reviews          Json?
+
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([languageKey, cityKey])
+  @@index([slug])
+  @@index([languageKey])
+  @@index([cityKey])
+}
+

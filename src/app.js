@@ -27,6 +27,8 @@ const aboutRoutes = require('./routes/aboutRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const clientsPageRoutes = require('./routes/clientsPageRoutes');
 const sitePageRoutes = require('./routes/sitePageRoutes');
+const serviceCityRoutes = require('./routes/serviceCityRoutes');
+const languageCityRoutes = require('./routes/languageCityRoutes');
 const app = express();
 const PORT = env.PORT;
 
@@ -103,6 +105,16 @@ app.use('/api/v1/contact', contactRoutes);
 app.use('/api/v1/clients-page', clientsPageRoutes);
 app.use('/api/v1/site-pages', sitePageRoutes);
 app.use('/api/v1/upload', uploadRoutes);
+// Service + City localized overrides:
+// /:serviceKey/cities endpoints (admin CRUD) + /all-overrides (public, for Next.js routing & sitemap)
+app.use('/api/v1/services', serviceCityRoutes);
+app.use('/api/v1/service-city-overrides', serviceCityRoutes);
+
+// Language + City localized overrides:
+// /:languageKey/cities endpoints (admin CRUD) + /all-overrides (public, for Next.js routing & sitemap)
+app.use('/api/v1/languages', languageCityRoutes);
+app.use('/api/v1/language-city-overrides', languageCityRoutes);
+
 
 // Serve uploads folder statically
 const path = require('path');

@@ -14,6 +14,10 @@ seedCms.js
 scratch/
 uploads/
 *.db
+clean_db_*.js
+count_*.js
+get_*.js
+test_*.js
 AGENTS.md
 CLAUDE.md
 GEMINI.md
