@@ -123,6 +123,59 @@ const updateService = async (req, res) => {
       where: { id },
       data: dataToUpdate
     });
+
+    if (price !== undefined && Number(price) > 0 && price !== existing.price) {
+      try {
+        const newP = Number(price);
+        const newEcon = Math.round(newP * 0.7);
+        const newExp = Math.round(newP * 1.5);
+
+        const overrides = await prisma.serviceCityOverride.findMany({
+          where: { serviceKey: existing.key }
+        });
+
+        for (const ov of overrides) {
+          let updatedFaqs = ov.faqs;
+          if (Array.isArray(updatedFaqs)) {
+            updatedFaqs = updatedFaqs.map(f => {
+              if (!f || typeof f !== 'object') return f;
+              let a = f.a || f.answer || '';
+              if (typeof a === 'string') {
+                a = a.replace(/(starts from\s*₹)\d+(\/page\s*\(standard\),\s*₹)\d+(\/page\s*\(certified[^\)]*\),\s*and\s*₹)\d+(\/page\s*\(express[^\)]*\))/gi,
+                  `$1${newEcon}$2${newP}$3${newExp}$4`
+                );
+                return { ...f, a: a, answer: a };
+              }
+              return f;
+            });
+          }
+
+          let updatedCO = ov.contentOverrides || {};
+          if (typeof updatedCO === 'object' && Array.isArray(updatedCO.pricingTiers)) {
+            updatedCO.pricingTiers = updatedCO.pricingTiers.map((t, idx) => {
+              if (idx === 0 || /standard/i.test(t.name)) return { ...t, price: `₹${newEcon}` };
+              if (idx === 1 || /certified/i.test(t.name)) return { ...t, price: `₹${newP}` };
+              if (idx === 2 || /express/i.test(t.name)) return { ...t, price: `₹${newExp}` };
+              return t;
+            });
+          }
+
+          await prisma.serviceCityOverride.update({
+            where: { id: ov.id },
+            data: {
+              faqs: updatedFaqs,
+              tier1Price: `₹${newEcon}`,
+              tier2Price: `₹${newP}`,
+              tier3Price: `₹${newExp}`,
+              contentOverrides: updatedCO
+            }
+          });
+        }
+      } catch (syncErr) {
+        console.warn('Service city override price sync warning:', syncErr);
+      }
+    }
+
     res.status(200).json({ success: true, data: service });
   } catch (error) {
     console.error('Error updating service:', error);
