@@ -11,6 +11,7 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "seed:admin": "tsx prisma/seed.ts",
     "seed:catalog": "tsx prisma/seedCatalog.ts",
+    "seed:cities": "tsx prisma/seedCities.ts",
     "seed:content": "tsx prisma/seedContent.ts",
     "seed:all": "tsx prisma/seedAll.ts"
   },
