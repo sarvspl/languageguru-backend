@@ -18,6 +18,18 @@ const REQUIRED = {
 const OPTIONAL = {
   PORT: '5000',
   NODE_ENV: 'development',
+  // Interface to bind. Behind a reverse proxy set HOST=127.0.0.1 so the port is
+  // not reachable from the internet directly — otherwise every request that
+  // skips nginx also skips HTTPS and the rate limits keyed on the real client IP.
+  HOST: '0.0.0.0',
+  // Number of reverse proxies in front of this server, passed to Express's
+  // `trust proxy`. Behind one nginx that is 1; add one for each extra hop (a CDN
+  // such as Cloudflare in front of nginx makes it 2). Left at 0 every request
+  // appears to come from 127.0.0.1, so express-rate-limit throttles ALL clients
+  // together — ten failed logins from anyone would lock out the whole panel.
+  // Never set this higher than the real hop count: each trusted hop is one more
+  // X-Forwarded-For entry a client can forge to fake its IP.
+  TRUST_PROXY: '0',
 };
 
 // Values that mean "not configured yet" even though the variable is present.
@@ -90,10 +102,18 @@ const EXTRA_ORIGINS = String(process.env.EXTRA_CORS_ORIGINS || '')
   .map((o) => o.trim().replace(/\/+$/, ''))
   .filter(Boolean);
 
+const trustProxy = parseInt(process.env.TRUST_PROXY || OPTIONAL.TRUST_PROXY, 10);
+if (Number.isNaN(trustProxy) || trustProxy < 0) {
+  fail([`  ✗ TRUST_PROXY must be a non-negative whole number — got "${process.env.TRUST_PROXY}".
+      ${OPTIONAL.TRUST_PROXY} means "no proxy"; 1 means "one nginx in front".`]);
+}
+
 const env = {
   NODE_ENV,
   isProduction: NODE_ENV === 'production',
   PORT: parseInt(process.env.PORT || OPTIONAL.PORT, 10),
+  HOST: String(process.env.HOST || OPTIONAL.HOST).trim(),
+  TRUST_PROXY: trustProxy,
   DATABASE_URL: String(process.env.DATABASE_URL).trim(),
   JWT_SECRET: secret,
   FRONTEND_URL,

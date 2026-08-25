@@ -32,6 +32,11 @@ const languageCityRoutes = require('./routes/languageCityRoutes');
 const app = express();
 const PORT = env.PORT;
 
+// Behind nginx every request arrives from 127.0.0.1, so req.ip is the proxy
+// unless Express is told how many hops to unwind. express-rate-limit keys on
+// req.ip: without this the login limiter counts all visitors as one client.
+if (env.TRUST_PROXY > 0) app.set('trust proxy', env.TRUST_PROXY);
+
 // Security Headers
 const helmet = require('helmet');
 app.use(helmet({
@@ -135,9 +140,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: 'Internal Server Error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Language Guru API listening on port ${PORT} [${env.NODE_ENV}]`);
+app.listen(PORT, env.HOST, () => {
+  console.log(`🚀 Language Guru API listening on ${env.HOST}:${PORT} [${env.NODE_ENV}]`);
   console.log(`   CORS origins: ${env.ALLOWED_ORIGINS.join(', ')}`);
+  console.log(`   trust proxy: ${env.TRUST_PROXY || 'off'}`);
 });
 
 module.exports = app;
