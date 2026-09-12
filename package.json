@@ -13,7 +13,9 @@
     "seed:catalog": "tsx prisma/seedCatalog.ts",
     "seed:cities": "tsx prisma/seedCities.ts",
     "seed:content": "tsx prisma/seedContent.ts",
-    "seed:all": "tsx prisma/seedAll.ts"
+    "seed:all": "tsx prisma/seedAll.ts",
+    "db:export": "tsx scripts/exportSnapshot.ts",
+    "seed:sync": "tsx prisma/seedSnapshot.ts"
   },
   "keywords": [
     "express",
