@@ -9,9 +9,26 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 
-import { LANGUAGES } from '../../languageguru-web/data/languages';
-import { CITIES } from '../../languageguru-web/data/cities';
-import { SERVICES_LIST as SERVICES, LG_SVC_DATA } from '../../languageguru-web/data/services';
+import fs from 'fs';
+import path from 'path';
+
+function loadWebData(moduleName: string) {
+  const candidates = [
+    path.resolve(__dirname, '../../my-app/data', moduleName),
+    path.resolve(__dirname, '../../languageguru-web/data', moduleName),
+    path.resolve(__dirname, '../data', moduleName),
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c + '.ts') || fs.existsSync(c + '.js')) {
+      return require(c);
+    }
+  }
+  throw new Error(`Could not find data module ${moduleName} in my-app or languageguru-web`);
+}
+
+const { LANGUAGES } = loadWebData('languages');
+const { CITIES } = loadWebData('cities');
+const { SERVICES_LIST: SERVICES, LG_SVC_DATA } = loadWebData('services');
 
 const prisma = new PrismaClient();
 
