@@ -26,9 +26,10 @@ const getHomeSectionById = async (req, res) => {
 
 const createHomeSection = async (req, res) => {
   try {
-    const { sectionId, tag, title, content, imageUrl, layout, buttonText, buttonLink, isActive, sortOrder, stat1Value, stat1Label, stat2Value, stat2Label } = req.body;
+    const { sectionId, tag, title, content, imageUrl, layout, buttonText, buttonLink, isActive, sortOrder, stat1Value, stat1Label, stat2Value, stat2Label, stat3Value, stat3Label, features } = req.body;
+    const featuresStr = Array.isArray(features) ? JSON.stringify(features) : (typeof features === 'string' ? features : null);
     const newSection = await prisma.homePageSection.create({
-      data: { sectionId, tag, title, content, imageUrl, layout, buttonText, buttonLink, stat1Value, stat1Label, stat2Value, stat2Label, isActive, sortOrder: sortOrder || 0 },
+      data: { sectionId, tag, title, content, imageUrl, layout, buttonText, buttonLink, stat1Value, stat1Label, stat2Value, stat2Label, stat3Value, stat3Label, features: featuresStr, isActive, sortOrder: sortOrder || 0 },
     });
     return res.status(201).json({ success: true, data: newSection, message: 'Section created successfully' });
   } catch (error) {
@@ -39,10 +40,11 @@ const createHomeSection = async (req, res) => {
 
 const updateHomeSection = async (req, res) => {
   try {
-    const { sectionId, tag, title, content, imageUrl, layout, buttonText, buttonLink, isActive, sortOrder, stat1Value, stat1Label, stat2Value, stat2Label } = req.body;
+    const { sectionId, tag, title, content, imageUrl, layout, buttonText, buttonLink, isActive, sortOrder, stat1Value, stat1Label, stat2Value, stat2Label, stat3Value, stat3Label, features } = req.body;
+    const featuresStr = Array.isArray(features) ? JSON.stringify(features) : (typeof features === 'string' ? features : null);
     const updated = await prisma.homePageSection.update({
       where: { id: req.params.id },
-      data: { sectionId, tag, title, content, imageUrl, layout, buttonText, buttonLink, stat1Value, stat1Label, stat2Value, stat2Label, isActive, sortOrder },
+      data: { sectionId, tag, title, content, imageUrl, layout, buttonText, buttonLink, stat1Value, stat1Label, stat2Value, stat2Label, stat3Value, stat3Label, features: featuresStr, isActive, sortOrder },
     });
     return res.status(200).json({ success: true, data: updated, message: 'Section updated successfully' });
   } catch (error) {

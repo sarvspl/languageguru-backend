@@ -13,7 +13,13 @@
  */
 // Load .env explicitly rather than relying on Prisma doing it as a side effect.
 import 'dotenv/config';
+import fs from 'fs';
+import path from 'path';
 import { PrismaClient } from '@prisma/client';
+
+const interpreterTabsSeed = JSON.parse(
+  fs.readFileSync(path.join(__dirname, 'seedData', 'homeInterpreterTabs.json'), 'utf8')
+);
 
 const prisma = new PrismaClient();
 
@@ -116,6 +122,15 @@ const HOME: PageSeed = {
       buttonText: 'View All Services →',
       buttonLink: '/services',
       settings: { source: 'services', limit: 8, sidebarHeading: '📋 All Services' },
+    },
+    {
+      sectionKey: 'interpreter-tabs',
+      kind: 'tabs',
+      subheading: 'Interpretation Services Offered by Language Guru',
+      buttonText: 'Book Interpreter →',
+      button2Text: 'WhatsApp',
+      settings: { stepsHeading: 'HOW IT WORKS', helplinePhone: '+91-9312690490' },
+      items: interpreterTabsSeed,
     },
     {
       sectionKey: 'industries',

@@ -239,6 +239,9 @@ model HomePageSection {
   stat1Label String?
   stat2Value String?
   stat2Label String?
+  stat3Value String?
+  stat3Label String?
+  features   String?
   isActive   Boolean  @default(true)
   sortOrder  Int      @default(0)
   createdAt  DateTime @default(now())

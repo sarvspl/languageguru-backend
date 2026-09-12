@@ -1,4 +1,5 @@
 const prisma = require('../config/db');
+const { sendAdminLeadNotification } = require('../utils/emailNotifier');
 
 // Submit quote request (Public)
 const submitQuote = async (req, res) => {
@@ -51,6 +52,11 @@ const submitQuote = async (req, res) => {
       message ? `Message: ${message}` : ''
     ].filter(Boolean).join('\n') || null;
 
+    const year = new Date().getFullYear();
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
+    const referenceId = `LG-${year}-${randomSuffix}`;
+    const leadNotesWithRef = `Ref: ${referenceId} | ` + (finalNotes ? finalNotes : '');
+
     const quote = await prisma.quoteRequest.create({
       data: {
         name: cap(name, 120),
@@ -61,11 +67,32 @@ const submitQuote = async (req, res) => {
         targetLang: cap(targetLang, 60) || null,
         pages: Math.min(Math.max(parseInt(pages) || 1, 1), 10000),
         isInterpreter: Boolean(isInterpreter),
-        notes: cap(finalNotes, 4000)
+        notes: cap(leadNotesWithRef, 4000)
       }
     });
 
-    return res.status(201).json({ success: true, message: 'Quote request submitted successfully!', data: quote });
+    // Trigger admin email notification (fail-safe asynchronous execution)
+    sendAdminLeadNotification({
+      referenceId,
+      name: quote.name,
+      phone: quote.phone,
+      email: quote.email,
+      serviceKey: quote.serviceKey,
+      sourceLang: quote.sourceLang,
+      targetLang: quote.targetLang,
+      pages: quote.pages,
+      isInterpreter: quote.isInterpreter,
+      notes: quote.notes,
+      city,
+      message
+    }).catch(err => console.error('Admin notification error:', err));
+
+    return res.status(201).json({
+      success: true,
+      message: 'Quote request submitted successfully!',
+      refId: referenceId,
+      data: { ...quote, referenceId }
+    });
   } catch (error) {
     console.error('Submit quote error:', error);
     return res.status(500).json({ success: false, message: 'Failed to submit quote request.' });

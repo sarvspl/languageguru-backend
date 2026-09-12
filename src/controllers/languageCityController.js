@@ -1,4 +1,4 @@
-﻿/**
+/**
  * languageCityController.js
  * Full CRUD for Language + City localized page overrides.
  * Architecture mirrors serviceCityController.js exactly.
@@ -19,9 +19,47 @@ function buildDefaultLanguageCityOverride(language, city) {
   const LK = language.key;
   const CK = city.key;
 
-  const basePrice = language.price || 899;
-  const pStd = Math.max(Math.round(basePrice * 0.72), 499);
-  const pExp = Math.round(basePrice * 1.5);
+  const langCO = (typeof language.contentOverrides === 'object' && language.contentOverrides) || {};
+
+  function localizeText(text) {
+    if (!text || typeof text !== 'string') return text;
+    const WEM_HOLD = '___WEM_ADDR___';
+    const EMB_HOLD = '___EMB_ND___';
+    const DHC_HOLD = '___DHC_CRT___';
+
+    let res = text
+      .replace(/617,\s*West\s+End\s+Mall,\s*Janakpuri,\s*New\s+(Delhi|India)([\s–\-]+110058)?/gi, WEM_HOLD)
+      .replace(/all\s+60\+\s+embassies\s+in\s+(New\s+)?(Delhi|India)/gi, EMB_HOLD)
+      .replace(/(Delhi|India)\s+High\s+Court/gi, DHC_HOLD)
+      .replace(/\{city\}/gi, CN)
+      .replace(/\{language\}/gi, LN)
+      .replace(/\{languageLower\}/gi, lnLow);
+
+    if (CN.toLowerCase() !== 'delhi' && CN.toLowerCase() !== 'new delhi') {
+      res = res
+        .replace(/\bIndia's\b/gi, `${CN}'s`)
+        .replace(/\b(New\s+)?Delhi's\b/gi, `${CN}'s`)
+        .replace(/\bin\s+(New\s+)?Delhi(\s+NCR)?\b/gi, `in ${CN}`)
+        .replace(/\bin\s+India\b/gi, `in ${CN}`)
+        .replace(/across\s+(New\s+)?Delhi(\s+NCR)?/gi, `across ${CN}`)
+        .replace(/across\s+India/gi, `across ${CN}`)
+        .replace(/–\s*(New\s+)?Delhi\b/gi, `– ${CN}`)
+        .replace(/–\s*India\b/gi, `– ${CN}`)
+        .replace(/\b(New\s+)?Delhi\s+Office\b/gi, `${CN} Office`)
+        .replace(/\b(New\s+)?Delhi\s+Clients\b/gi, `${CN} Clients`)
+        .replace(/\b(New\s+)?Delhi\s+agency\b/gi, `${CN} agency`)
+        .replace(/\b(New\s+)?Delhi\s+team\b/gi, `${CN} team`)
+        .replace(new RegExp(`${CN}\\s+(New\\s+)?Delhi`, "gi"), CN)
+        .replace(new RegExp(`(New\\s+)?Delhi\\s+${CN}`, "gi"), CN);
+    }
+
+    res = res
+      .replace(new RegExp(WEM_HOLD, 'g'), '617, West End Mall, Janakpuri, New Delhi – 110058')
+      .replace(new RegExp(EMB_HOLD, 'g'), 'all 60+ embassies in New Delhi')
+      .replace(new RegExp(DHC_HOLD, 'g'), 'Delhi High Court');
+
+    return res;
+  }
 
   const defaultProcessSteps = [
     { step: 1, title: "Submit Documents", desc: "Share scanned copies via WhatsApp, email, or drop off at our " + CN + " office." },
@@ -31,49 +69,88 @@ function buildDefaultLanguageCityOverride(language, city) {
     { step: 5, title: "Express Delivery", desc: "Digital PDF emailed in 24 hrs; hard copy couriered to any address in " + CN + "." }
   ];
 
-  const defaultIntroParagraphs = [
-    "Language Guru is " + CN + "'s leading ISO-certified " + LN + " translation agency delivering professional, embassy-accepted " + LN + "↔English/Hindi translation services to individuals, law firms, hospitals, and corporates in " + CN + " since 2005.",
-    "Our certified " + LN + " translators are native speakers and domain specialists in legal, medical, academic, immigration, and business translation — serving every major district in " + CN + " with 24-hour express delivery.",
-    "All " + LN + " translations are delivered on official letterhead with a signed Certificate of Accuracy, accepted by 60+ embassies, MEA, all Indian courts, and universities worldwide from " + CN + "."
+  const standardIntroParagraphs = [
+    "Language Guru is a leading certified " + LN + " translation agency, offering professional " + LN + "↔English/Hindi translation services since 2005. ISO-9001:2015 and ISO 17100:2015 certified, MSME registered, government-authorized — translations accepted by all embassies, MEA and courts.",
+    "Our " + LN + " translators are native speakers and domain experts across legal, medical, technical, academic and immigration fields. All translations on official letterhead with notarization, Certificate of Accuracy and ISO stamp — embassy-ready on first submission.",
+    "From birth certificates to large corporate translation projects, we deliver accurate " + LN + " translations on time. 24-hour express delivery available across " + CN + ". Office submission or email / WhatsApp."
   ];
 
-  const defaultLegalParagraphs = [
-    "Language Guru provides court-certified " + LN + " legal translation in " + CN + " — covering affidavits, contracts, court judgments, power of attorney, MOA/AOA, and all evidentiary documents.",
-    "Our legal " + LN + " translators in " + CN + " are qualified professionals with deep expertise in Indian and international legal terminology, ensuring 100% court and embassy acceptance."
+  const standardLegalParagraphs = [
+    "Language Guru is one of India's most trusted providers of legal " + LN + " translation services. Our legal " + LN + " translators are qualified professionals with deep expertise in Indian and international law, court procedures, contract law, immigration regulations and corporate compliance. Every legal " + LN + " translation is done by a native " + LN + "-speaking legal specialist and reviewed by a second expert before delivery.",
+    "We provide court-certified and embassy-accepted legal " + LN + " translations for all types of legal documents – from court orders and judgments to contracts, affidavits, power of attorney, partnership deeds, MOA/AOA, and property papers. Our translations are accepted by all district courts, high courts, the Supreme Court of India, MEA (Ministry of External Affairs), and 60+ embassies in New Delhi including the German Embassy, French Embassy and US Embassy.",
+    "For legal professionals, law firms, corporate legal departments and individuals needing court-ready " + LN + " translation in " + CN + ", Language Guru delivers with precision, confidentiality and legal accuracy. We work under strict Non-Disclosure Agreements and comply with ISO-9001:2015 and ISO 17100:2015 standards."
   ];
 
-  const defaultOfficialParagraphs = [
-    "Official " + LN + " translations from Language Guru in " + CN + " meet the strict formatting and accuracy standards required by Indian government bodies, embassies, consulates, and MEA.",
-    "We provide sworn and notarized official " + LN + " translations in " + CN + " for visa applications, MEA apostille, embassy attestation, university admissions, and all government submissions."
+  const standardOfficialParagraphs = [
+    "Language Guru provides official " + LN + " translation services accepted by all government bodies, regulatory authorities, embassies and public institutions in India and abroad. Our official " + LN + " translations carry the full credentials required by government bodies: official company letterhead, certified translator's signature, registration number, contact details, and a sworn statement of accuracy – making them immediately valid for submission to any government department, court, embassy or university.",
+    "Official " + LN + " translation is required for a wide range of purposes in " + CN + ": visa and immigration applications, MEA apostille and embassy attestation, court and tribunal submissions, university admissions abroad, government tenders and procurement, and all public notarial acts. Language Guru – MSME registered, ISO-9001:2015 and ISO 17100:2015 certified and operating since 2005 – is one of the few agencies in India authorized to issue officially certified translations accepted by all Indian and foreign government bodies.",
+    "We offer official " + LN + " translations with turnaround as fast as 24 hours, with easy document submission via email / WhatsApp in " + CN + " and secure courier delivery anywhere in India. All translations include digital (soft copy PDF/Word) and physical (hard copy with stamps) delivery options."
   ];
 
-  const defaultCertifiedParagraphs = [
-    "Every certified " + LN + " translation from Language Guru in " + CN + " is printed on official letterhead with a unique certification number, authorized translator signature, official seal, and Certificate of Accuracy.",
-    "Our certified " + LN + " translations are accepted by all 60+ embassies in New Delhi, MEA, High Court, all district courts, passport offices, banks, and universities from " + CN + "."
+  const standardCertifiedParagraphs = [
+    "Language Guru delivers ISO-9001:2015 and ISO 17100:2015 certified " + LN + " translation services across India. A certified " + LN + " translation from Language Guru includes: translation on official agency letterhead, certified translator's full name, qualification, signature and stamp, a formal statement of accuracy and completeness, and the agency's MSME registration and ISO certification details. This complete package is the standard required by all embassies, courts, MEA and government departments in India and internationally.",
+    "Our certified " + LN + " translations are prepared exclusively by native " + LN + " speakers holding recognized translation qualifications (B.A./M.A. in Translation, DipTrans, or equivalent) with minimum 5 years of domain-specific experience. Every certified " + LN + " translation undergoes a mandatory 3-stage quality check: initial translation by a domain expert, independent review by a second " + LN + " specialist, and final certification by our Quality Manager. This process ensures 100% accuracy and first-submission acceptance at all embassies and government offices.",
+    "Whether you need a single certified " + LN + " document or a bulk project of 100+ pages in " + CN + ", Language Guru offers consistent quality, ISO-standard processes and competitive pricing starting at ₹850/page for certified translations with full letterhead, Certificate of Accuracy and quality certification. Express 24-hour certified " + LN + " translation is available for urgent requirements."
   ];
 
-  const defaultAgencyParagraphs = [
-    "With 20+ years, 50,000+ projects, and 500+ certified translators, Language Guru is India's most trusted " + LN + " translation agency serving " + CN + ".",
-    "All translations undergo a strict three-tier quality control process — native translation, expert review, and final proofreading — before our official seal is applied."
+  const standardAgencyParagraphs = [
+    "Language Guru is a leading ISO-9001:2015 and ISO 17100:2015 certified " + LN + " translation agency in " + CN + ". Our network of 200+ sworn " + LN + " translators has delivered 20,000+ certified projects accepted by all embassies, MEA, courts, and universities. We accept documents via office visit (Delhi), email or WhatsApp, offer 24-hour express delivery, and complete confidentiality under NDA-backed protocols across all cities in India.",
+    "Our " + LN + " translators hold recognized qualifications from top European and Indian universities, with certification from the respective language institutes. Language Guru serves individuals, law firms, hospitals, MNCs, and government departments in " + CN + " with transparent pricing starting from ₹600/page."
   ];
 
-  const defaultInterpParagraphs = [
-    "Language Guru provides professional simultaneous, consecutive, and remote " + LN + " interpretation services in " + CN + " for summits, court proceedings, medical appointments, and diplomatic events."
+  const standardInterpParagraphs = [
+    "Language Guru – Language Guru provides certified " + LN + " interpretation services across India. Our professional " + LN + " interpreters are qualified, native-speaking language specialists with domain expertise in legal, medical, corporate and conference settings. We offer both on-site and remote interpretation in " + LN + "↔English and " + LN + "↔Hindi language pairs, covered under our ISO-9001:2015 and ISO 17100:2015 quality framework with strict NDA protection.",
+    "Our " + LN + " interpreters serve clients in " + CN + " for court hearings, business negotiations, medical consultations, embassy appointments, trade fairs and international conferences. With 20+ years of experience, Language Guru is the preferred " + LN + " interpretation partner for government bodies, law firms, hospitals, embassies and Fortune 500 companies across India.",
+    "Whether you need a consecutive interpreter for a one-on-one meeting, a simultaneous interpreter for a large conference, or a telephone interpreter for a remote consultation in " + CN + " — Language Guru has certified " + LN + " interpreters available for same-day bookings. Call or WhatsApp +91-9312690490 for instant booking."
   ];
 
-  const defaultDocCategories = [
-    { id: "cat-immigration", name: "Immigration & Visa", icon: "🛂", color: "#dbeafe", panelTitle: LN + " Immigration Document Translation in " + CN, panelSub: "Visa, PR, work permit, immigration forms", docs: "Passport Copy, Visa Application, Police Clearance (PCC), Birth Certificate, Marriage Certificate, Sponsorship Letter, Employment Contract", ctaText: "Need " + LN + " immigration translation in " + CN + "?", ctaBtn: "📋 Get Quote" },
-    { id: "cat-legal", name: "Legal & Court", icon: "⚖️", color: "#e0e7ff", panelTitle: LN + " Legal Document Translation in " + CN, panelSub: "Affidavits, contracts, court orders & agreements", docs: "Affidavit, Power of Attorney, Court Judgment, Contract, Partnership Deed, MOA/AOA, NDA, Patent", ctaText: "Need sworn " + LN + " legal translation in " + CN + "?", ctaBtn: "⚖️ Get Legal Quote" },
-    { id: "cat-academic", name: "Academic & Degrees", icon: "🎓", color: "#fef3c7", panelTitle: LN + " Academic Document Translation in " + CN, panelSub: "Degrees, diplomas, transcripts & marksheet", docs: "Degree Certificate, Diploma, Transcript, Marksheet, Migration Certificate, Recommendation Letter, Syllabus", ctaText: "Applying to " + LN + "-speaking universities from " + CN + "?", ctaBtn: "🎓 Get Academic Quote" },
-    { id: "cat-medical", name: "Medical & Healthcare", icon: "🏥", color: "#fee2e2", panelTitle: LN + " Medical Document Translation in " + CN, panelSub: "Medical reports, clinical trials & prescriptions", docs: "Medical Report, Discharge Summary, Clinical Trial Dossier, Prescription, Lab Test, Vaccine Card, Hospital Record", ctaText: "Need " + LN + " medical translation from " + CN + "?", ctaBtn: "🏥 Get Medical Quote" },
-    { id: "cat-business", name: "Business & Corporate", icon: "💼", color: "#f3e8ff", panelTitle: LN + " Business Document Translation in " + CN, panelSub: "Company documents, agreements & trade licenses", docs: "Articles of Association, Board Resolution, Annual Report, Business Plan, Trade License, Invoice, Financial Statement", ctaText: LN + " business translation in " + CN + "?", ctaBtn: "💼 Get Corporate Quote" },
-    { id: "cat-technical", name: "Technical & Engineering", icon: "⚙️", color: "#dcfce7", panelTitle: LN + " Technical Document Translation in " + CN, panelSub: "Manuals, patents, engineering documents", docs: "Technical Manual, Patent Application, Engineering Specification, Safety Data Sheet, Product Brochure, Software Manual", ctaText: LN + " technical translation from " + CN + "?", ctaBtn: "⚙️ Get Technical Quote" }
+  const isObsoleteArr = (arr) => {
+    if (!Array.isArray(arr) || arr.length === 0) return true;
+    return arr.some(s => typeof s === 'string' && (
+      s.includes('covering affidavits, contracts') ||
+      s.includes('strict formatting and accuracy standards required by Indian government bodies') ||
+      s.includes('with a unique certification number, authorized translator signature') ||
+      (s.includes('corporate compliance.') && !s.includes('second expert'))
+    ));
+  };
+
+  const defaultIntroParagraphs = (Array.isArray(langCO.introParagraphs) && langCO.introParagraphs.length > 0)
+    ? langCO.introParagraphs.map(localizeText)
+    : standardIntroParagraphs;
+
+  const defaultLegalParagraphs = (Array.isArray(langCO.legalParagraphs) && langCO.legalParagraphs.length >= 3 && !isObsoleteArr(langCO.legalParagraphs))
+    ? langCO.legalParagraphs.map(localizeText)
+    : standardLegalParagraphs;
+
+  const defaultOfficialParagraphs = (Array.isArray(langCO.officialParagraphs) && langCO.officialParagraphs.length >= 3 && !isObsoleteArr(langCO.officialParagraphs))
+    ? langCO.officialParagraphs.map(localizeText)
+    : standardOfficialParagraphs;
+
+  const defaultCertifiedParagraphs = (Array.isArray(langCO.certifiedParagraphs) && langCO.certifiedParagraphs.length >= 3 && !isObsoleteArr(langCO.certifiedParagraphs))
+    ? langCO.certifiedParagraphs.map(localizeText)
+    : standardCertifiedParagraphs;
+
+  const defaultAgencyParagraphs = (Array.isArray(langCO.agencyParagraphs) && langCO.agencyParagraphs.length >= 2 && !isObsoleteArr(langCO.agencyParagraphs))
+    ? langCO.agencyParagraphs.map(localizeText)
+    : standardAgencyParagraphs;
+
+  const defaultInterpParagraphs = (Array.isArray(langCO.interpParagraphs) && langCO.interpParagraphs.length >= 3 && !isObsoleteArr(langCO.interpParagraphs))
+    ? langCO.interpParagraphs.map(localizeText)
+    : standardInterpParagraphs;
+
+  const standardDocCategories = [
+    { id: "cat-immigration", name: "Immigration & Visa", icon: "🛂", color: "#dbeafe", panelTitle: LN + " Immigration Document Translation in " + CN, panelSub: "Visa, PR, work permit, immigration forms", docs: "Birth Certificate, Marriage Certificate, Death Certificate, Police Clearance (PCC), Domicile Certificate, Sponsor Letter, Passport Pages, Travel History, Medical Fitness Cert, Income / Employment Proof, Educational Certificates, Bank Statements, Affidavit of Support, Power of Attorney, Visa Application Forms, Family Registration Docs", ctaText: "Need " + LN + " immigration translation in " + CN + "?", ctaBtn: "📋 Get Quote" },
+    { id: "cat-legal", name: "Legal & Court", icon: "⚖️", color: "#fef3c7", panelTitle: LN + " Legal Document Translation in " + CN, panelSub: "Court orders, affidavits, contracts & agreements", docs: "Court Orders / Judgments, Power of Attorney, Partnership Deed, Property Papers, Affidavits, Legal Notices, MOA / AOA, Contracts / Agreements, Arbitration Awards, Divorce Decree, Investigation Reports, Company Registration, Import / Export Licenses, Employment Contracts, NDA / Agreements, Wills & Trusts", ctaText: "Need sworn " + LN + " legal translation in " + CN + "?", ctaBtn: "⚖️ Get Legal Quote" },
+    { id: "cat-academic", name: "Academic & Degrees", icon: "🎓", color: "#dcfce7", panelTitle: LN + " Academic Document Translation in " + CN, panelSub: "Degrees, diplomas, transcripts & marksheet", docs: "Degree Certificate, Mark Sheets / Transcripts, Migration Certificate, School Leaving Cert, DDV (Germany), Research Papers, Medium of Instruction, Achievement Certificates, Scholarship Docs, Thesis / Dissertation, WES / IQAS Evaluation, Professional Certifications", ctaText: "Applying to " + LN + "-speaking universities from " + CN + "?", ctaBtn: "🎓 Get Academic Quote" },
+    { id: "cat-medical", name: "Medical & Healthcare", icon: "🏥", color: "#fce7f3", panelTitle: LN + " Medical Document Translation in " + CN, panelSub: "Medical reports, clinical trials & prescriptions", docs: "Medical Reports, Hospital Records, Prescriptions / Lab Reports, Clinical Trial Docs, Pharma Documentation, Disability Certificates, Hospital Discharge Summary, Health Insurance Docs, Medical Device Manuals, Drug Approvals, Ayurvedic / Herbal Docs, Medical Certificates", ctaText: "Need " + LN + " medical translation from " + CN + "?", ctaBtn: "🏥 Get Medical Quote" },
+    { id: "cat-financial", name: "Financial & Business", icon: "💼", color: "#fff7ed", panelTitle: LN + " Financial & Business Translation in " + CN, panelSub: "Bank statements, audits, tax returns & agreements", docs: "Bank Statements, Income Tax Returns, Balance Sheets, Annual Reports, Company Registration, Business Contracts, Salary Certificates, GST / VAT Documents, Import / Export Docs, Insurance Policies, Investment Documents, RBI / SEBI Filings", ctaText: LN + " business translation in " + CN + "?", ctaBtn: "💼 Get Corporate Quote" },
+    { id: "cat-technical", name: "Technical & Engineering", icon: "🔬", color: "#f0fdf4", panelTitle: LN + " Technical Document Translation in " + CN, panelSub: "Manuals, patents, engineering documents", docs: "Machinery Manuals, Engineering Specs, Safety Data Sheets, Installation Guides, Patents & Trademarks, Software Documentation, Quality Certifications, Technical Drawings, Maintenance Guides, Environmental Reports, Risk Assessments, Compliance Certificates", ctaText: LN + " technical translation from " + CN + "?", ctaBtn: "⚙️ Get Technical Quote" }
   ];
 
   const defaultPricingTiers = [
-    { tier: 1, name: "Standard Translation", price: "₹" + pStd, unit: "per page", delivery: "5–7 Days", badge: "", feats: "Professional " + lnLow + " translation|Standard accuracy review|Digital PDF delivery|Email support" },
-    { tier: 2, name: "Certified Translation", price: "₹" + basePrice, unit: "per page", delivery: "24–48 Hours", badge: "MOST POPULAR", feats: "ISO 17100 Certified " + lnLow + " translation|Certificate of Accuracy|Agency Sign & Stamp|Embassy & Court Accepted|Courier across " + CN },
-    { tier: 3, name: "Express & Notarized", price: "₹" + pExp, unit: "per page", delivery: "24 Hours Express", badge: "EXPRESS", feats: "Urgent 24-hr turnaround|Notarized with Advocate Stamp|Apostille/Embassy ready|Priority linguist assignment|Free express courier in " + CN }
+    { tier: 1, name: "Certified Translation", price: "₹850", unit: "per page", delivery: "3–5 working days", badge: "MOST POPULAR", feats: "ISO 17100 Certified " + lnLow + " translation|Certificate of Accuracy|Agency Sign & Stamp|Embassy & Court Accepted|Courier across " + CN },
+    { tier: 2, name: "Express Translation", price: "₹1,275", unit: "per page", delivery: "24 hours", badge: "EXPRESS", feats: "Urgent 24-hr turnaround|Notarized with Advocate Stamp|Apostille/Embassy ready|Priority linguist assignment|Free express courier in " + CN },
+    { tier: 3, name: "Standard Translation", price: "₹600", unit: "per page", delivery: "5–7 working days", badge: "", feats: "Professional " + lnLow + " translation|Standard accuracy review|Digital PDF delivery|Email support" }
   ];
 
   const defaultWhyChooseList = [
@@ -84,10 +161,12 @@ function buildDefaultLanguageCityOverride(language, city) {
   ];
 
   const defaultSampleCerts = [
-    { doc: "Birth Certificate", lang: "English → " + LN, flag: FLAG, acc: "Embassy Accepted", time: "24 Hrs", icon: "📜" },
-    { doc: "Degree Certificate", lang: "English → " + LN, flag: FLAG, acc: "University Accepted", time: "24 Hrs", icon: "🎓" },
-    { doc: "Marriage Certificate", lang: LN + " → English", flag: FLAG, acc: "Embassy & MEA", time: "24 Hrs", icon: "💍" },
-    { doc: "Legal Contract", lang: LN + " → English", flag: FLAG, acc: "Court Certified", time: "48 Hrs", icon: "⚖️" }
+    { doc: "Birth Certificate", lang: "English → German", code: "DE", flag: "🇩🇪", seal: "🇩🇪", time: "24 Hrs", icon: "📜", acc: "German Embassy" },
+    { doc: "Birth Certificate", lang: "English → French", code: "FR", flag: "🇫🇷", seal: "🇫🇷", time: "24 Hrs", icon: "📜", acc: "French Consulate" },
+    { doc: "Birth Certificate", lang: "Hindi → Arabic", code: "SA", flag: "🇸🇦", seal: "🇸🇦", time: "48 Hrs", icon: "📜", acc: "Saudi Consulate" },
+    { doc: "Marriage Certificate", lang: "English → Spanish", code: "ES", flag: "🇪🇸", seal: "🇪🇸", time: "24 Hrs", icon: "💒", acc: "Spanish Embassy" },
+    { doc: "Marriage Certificate", lang: "Hindi → German", code: "DE", flag: "🇩🇪", seal: "🇩🇪", time: "48 Hrs", icon: "💒", acc: "German Embassy" },
+    { doc: "Marriage Certificate", lang: "English → Japanese", code: "JP", flag: "🇯🇵", seal: "🇯🇵", time: "48 Hrs", icon: "💒", acc: "Japanese Embassy" }
   ];
 
   const defaultReviews = [
@@ -97,7 +176,7 @@ function buildDefaultLanguageCityOverride(language, city) {
   ];
 
   const defaultFaqs = [
-    { q: "How much does " + LN + " translation cost in " + CN + "?", a: LN + " translation in " + CN + " starts from ₹" + pStd + "/page (standard), ₹" + basePrice + "/page (certified with agency letterhead + Certificate of Accuracy), and ₹" + pExp + "/page (express 24-hr). Bulk discounts available for 10+ pages." },
+    { q: "How much does " + LN + " translation cost in " + CN + "?", a: LN + " translation in " + CN + " starts from ₹600/page (standard), ₹850/page (certified with agency letterhead + Certificate of Accuracy), and ₹1,275/page (express 24-hr). Bulk discounts available for 10+ pages." },
     { q: "Are your " + LN + " translations accepted by embassies in " + CN + "?", a: "Yes — our certified " + LN + " translations carry the Agency Sign & Stamp and Certificate of Accuracy under ISO-9001:2015 and ISO 17100:2015, accepted by 60+ embassies, MEA, all Indian courts, and universities from " + CN + "." },
     { q: "How fast can I get " + LN + " translation in " + CN + "?", a: "Standard delivery is 2–3 working days. Certified delivery is 24–48 hours. Express 24-hr turnaround is available for urgent submissions from " + CN + "." },
     { q: "Do you provide " + LN + " translation in cities other than " + CN + "?", a: "Yes! We provide ISO-certified " + LN + " translation across 108 cities in India including Mumbai, Bangalore, Chennai, Hyderabad, Pune, Kolkata, Ahmedabad, and more." },
@@ -121,7 +200,7 @@ function buildDefaultLanguageCityOverride(language, city) {
     certifiedParagraphs: defaultCertifiedParagraphs,
     agencyParagraphs: defaultAgencyParagraphs,
     interpParagraphs: defaultInterpParagraphs,
-    docCategories: defaultDocCategories,
+    docCategories: standardDocCategories,
     pricingTiers: defaultPricingTiers,
     sampleCertsList: defaultSampleCerts,
     processSteps: defaultProcessSteps,
@@ -158,11 +237,11 @@ function buildDefaultLanguageCityOverride(language, city) {
     heroBgImage: "",
     heroBtn1Text: "📋 Get Free Quote",
     heroBtn1Link: "/quote",
-    heroBtn2Text: "📞 Call Expert",
+    heroBtn2Text: "📞 Call Now",
     heroBtn2Phone: "+91-9312690490",
     heroBtn3Text: "💬 WhatsApp",
     heroBtn3WA: "919312690490",
-    heroBadgesList: "✅ All Embassy Accepted | ⚡ 24-Hr Express | 🔏 Notarized & Apostilled | ⭐ 4.9/5 · 10,000+ Reviews",
+    heroBadgesList: "✅ Embassy Accepted | ⚡ 24-Hr Express | 🔏 Notarized & Apostilled | 🏆 Internationally Certified | ⭐ 4.8/5 - 10,000+ Reviews",
     title: LN + " Translation Services in " + CN,
     p1: defaultIntroParagraphs[0],
     p2: defaultIntroParagraphs[1],
@@ -202,9 +281,9 @@ function buildDefaultLanguageCityOverride(language, city) {
     sidebarBtn2Text: "💬 WhatsApp Us",
     sidebarBtn2WA: "919312690490",
     sidebarCtaTitle: "Get " + LN + " Translation in " + CN,
-    sidebarCitiesTitle: "🏙️ " + LN + " Translation – Other Cities",
-    sidebarLangsTitle: "🌐 Other Languages in " + CN,
-    sidebarOtherSvcsTitle: "📋 Other Services – " + CN,
+    sidebarCitiesTitle: "🏙️ " + LN + " Translation – By City",
+    sidebarLangsTitle: "Other Languages – " + CN,
+    sidebarOtherSvcsTitle: "Other Translation Services – " + CN,
     ...defaultTrustCards,
     contentOverrides: co,
     faqs: defaultFaqs,
@@ -261,15 +340,27 @@ const getLanguageCityOverride = async (req, res) => {
 
       const arr = (a, b) => (Array.isArray(a) && a.length > 0) ? a : b;
 
+      const cleanOverrideArr = (arrVal, defVal) => {
+        if (!Array.isArray(arrVal) || arrVal.length === 0) return defVal;
+        const isObsolete = arrVal.some(s => typeof s === 'string' && (
+          s.includes('covering affidavits, contracts') ||
+          s.includes('strict formatting and accuracy standards required by Indian government bodies') ||
+          s.includes('with a unique certification number, authorized translator signature') ||
+          (s.includes('corporate compliance.') && !s.includes('second expert'))
+        ));
+        if (isObsolete) return defVal;
+        return arrVal;
+      };
+
       const mergedContentOverrides = {
         ...defCO,
         ...ovCO,
-        introParagraphs:     arr(ovCO.introParagraphs,     defCO.introParagraphs),
-        legalParagraphs:     arr(ovCO.legalParagraphs,     defCO.legalParagraphs),
-        officialParagraphs:  arr(ovCO.officialParagraphs,  defCO.officialParagraphs),
-        certifiedParagraphs: arr(ovCO.certifiedParagraphs, defCO.certifiedParagraphs),
-        agencyParagraphs:    arr(ovCO.agencyParagraphs,    defCO.agencyParagraphs),
-        interpParagraphs:    arr(ovCO.interpParagraphs,    defCO.interpParagraphs),
+        introParagraphs:     cleanOverrideArr(ovCO.introParagraphs,     defCO.introParagraphs),
+        legalParagraphs:     cleanOverrideArr(ovCO.legalParagraphs,     defCO.legalParagraphs),
+        officialParagraphs:  cleanOverrideArr(ovCO.officialParagraphs,  defCO.officialParagraphs),
+        certifiedParagraphs: cleanOverrideArr(ovCO.certifiedParagraphs, defCO.certifiedParagraphs),
+        agencyParagraphs:    cleanOverrideArr(ovCO.agencyParagraphs,    defCO.agencyParagraphs),
+        interpParagraphs:    cleanOverrideArr(ovCO.interpParagraphs,    defCO.interpParagraphs),
         docCategories:       arr(ovCO.docCategories,       defCO.docCategories),
         pricingTiers:        arr(ovCO.pricingTiers,        defCO.pricingTiers),
         sampleCertsList:     arr(ovCO.sampleCertsList,     defCO.sampleCertsList),
