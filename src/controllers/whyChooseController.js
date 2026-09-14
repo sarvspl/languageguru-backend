@@ -62,7 +62,16 @@ exports.getWhyChoose = async (req, res) => {
       where: { isActive: true },
       orderBy: { sortOrder: 'asc' }
     });
-    res.json({ success: true, data: items });
+    const seen = new Set();
+    const unique = [];
+    for (const item of items) {
+      const t = (item.title || '').trim().toLowerCase();
+      if (!seen.has(t)) {
+        seen.add(t);
+        unique.push(item);
+      }
+    }
+    res.json({ success: true, data: unique });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

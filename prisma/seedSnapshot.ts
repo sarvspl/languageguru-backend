@@ -222,6 +222,10 @@ async function syncAll() {
 
   // 12. Collections: Gallery, Translators, Testimonials, Clients, FAQs, WhyChoose
   if (Array.isArray(data.galleryItems) && data.galleryItems.length > 0) {
+    const validIds = data.galleryItems.map((x: any) => x.id).filter(Boolean);
+    if (validIds.length > 0) {
+      await prisma.galleryItem.deleteMany({ where: { id: { notIn: validIds } } });
+    }
     for (const item of data.galleryItems) {
       const { id, createdAt: _c, updatedAt: _u, ...rest } = item;
       await prisma.galleryItem.upsert({
@@ -233,6 +237,10 @@ async function syncAll() {
   }
 
   if (Array.isArray(data.translators) && data.translators.length > 0) {
+    const validIds = data.translators.map((x: any) => x.id).filter(Boolean);
+    if (validIds.length > 0) {
+      await prisma.translator.deleteMany({ where: { id: { notIn: validIds } } });
+    }
     for (const item of data.translators) {
       const { id, createdAt: _c, updatedAt: _u, ...rest } = item;
       await prisma.translator.upsert({
@@ -244,6 +252,10 @@ async function syncAll() {
   }
 
   if (Array.isArray(data.testimonials) && data.testimonials.length > 0) {
+    const validIds = data.testimonials.map((x: any) => x.id).filter(Boolean);
+    if (validIds.length > 0) {
+      await prisma.testimonial.deleteMany({ where: { id: { notIn: validIds } } });
+    }
     for (const item of data.testimonials) {
       const { id, createdAt: _c, updatedAt: _u, ...rest } = item;
       await prisma.testimonial.upsert({
@@ -255,6 +267,10 @@ async function syncAll() {
   }
 
   if (Array.isArray(data.clients) && data.clients.length > 0) {
+    const validIds = data.clients.map((x: any) => x.id).filter(Boolean);
+    if (validIds.length > 0) {
+      await prisma.client.deleteMany({ where: { id: { notIn: validIds } } });
+    }
     for (const item of data.clients) {
       const { id, createdAt: _c, updatedAt: _u, ...rest } = item;
       await prisma.client.upsert({
@@ -266,6 +282,10 @@ async function syncAll() {
   }
 
   if (Array.isArray(data.faqs) && data.faqs.length > 0) {
+    const validIds = data.faqs.map((x: any) => x.id).filter(Boolean);
+    if (validIds.length > 0) {
+      await prisma.faq.deleteMany({ where: { id: { notIn: validIds } } });
+    }
     for (const item of data.faqs) {
       const { id, createdAt: _c, updatedAt: _u, ...rest } = item;
       await prisma.faq.upsert({
@@ -277,6 +297,10 @@ async function syncAll() {
   }
 
   if (Array.isArray(data.whyChooseItems) && data.whyChooseItems.length > 0) {
+    const validIds = data.whyChooseItems.map((x: any) => x.id).filter(Boolean);
+    if (validIds.length > 0) {
+      await prisma.whyChooseItem.deleteMany({ where: { id: { notIn: validIds } } });
+    }
     for (const item of data.whyChooseItems) {
       const { id, createdAt: _c, updatedAt: _u, ...rest } = item;
       await prisma.whyChooseItem.upsert({

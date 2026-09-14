@@ -15,7 +15,8 @@
     "seed:content": "tsx prisma/seedContent.ts",
     "seed:all": "tsx prisma/seedAll.ts",
     "db:export": "tsx scripts/exportSnapshot.ts",
-    "seed:sync": "tsx prisma/seedSnapshot.ts"
+    "seed:sync": "tsx prisma/seedSnapshot.ts",
+    "db:clean": "node scripts/cleanDuplicates.js"
   },
   "keywords": [
     "express",
