@@ -5,7 +5,7 @@ const getGallery = async (req, res) => {
   try {
     const items = await prisma.galleryItem.findMany({
       where: { isActive: true },
-      orderBy: { cat: 'asc' }
+      orderBy: { createdAt: 'asc' }
     });
     res.status(200).json({ success: true, data: items });
   } catch (error) {
@@ -16,7 +16,7 @@ const getGallery = async (req, res) => {
 // Get ALL gallery items (admin — includes inactive)
 const getAllGallery = async (req, res) => {
   try {
-    const items = await prisma.galleryItem.findMany({ orderBy: { cat: 'asc' } });
+    const items = await prisma.galleryItem.findMany({ orderBy: { createdAt: 'asc' } });
     res.status(200).json({ success: true, data: items });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error fetching gallery.' });
