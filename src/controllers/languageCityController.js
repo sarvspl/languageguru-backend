@@ -149,7 +149,7 @@ function buildDefaultLanguageCityOverride(language, city) {
 
   const defaultPricingTiers = [
     { tier: 1, name: "Certified Translation", price: "₹850", unit: "per page", delivery: "3–5 working days", badge: "MOST POPULAR", feats: "ISO 17100 Certified " + lnLow + " translation|Certificate of Accuracy|Agency Sign & Stamp|Embassy & Court Accepted|Courier across " + CN },
-    { tier: 2, name: "Express Translation", price: "₹1,275", unit: "per page", delivery: "24 hours", badge: "EXPRESS", feats: "Urgent 24-hr turnaround|Notarized with Advocate Stamp|Apostille/Embassy ready|Priority linguist assignment|Free express courier in " + CN },
+    { tier: 2, name: "Express Translation", price: "₹1,275", unit: "per page", delivery: "24 hours", badge: "", feats: "Urgent 24-hr turnaround|Notarized with Advocate Stamp|Apostille/Embassy ready|Priority linguist assignment|Free express courier in " + CN },
     { tier: 3, name: "Standard Translation", price: "₹600", unit: "per page", delivery: "5–7 working days", badge: "", feats: "Professional " + lnLow + " translation|Standard accuracy review|Digital PDF delivery|Email support" }
   ];
 

@@ -147,7 +147,7 @@ function buildDefaultCityOverride(service, city) {
     : [
         { tier: 1, name: 'Standard Translation', price: `₹${pEcon}`, unit: 'per page', delivery: '2-3 Days', badge: '', feats: `Professional ${snLow}|Standard accuracy|Digital delivery (PDF)|Email support` },
         { tier: 2, name: 'Certified Translation', price: `₹${basePrice}`, unit: 'per page', delivery: '24-48 Hours', badge: 'MOST POPULAR', feats: `ISO 17100 Certified ${snLow}|Certificate of Accuracy|Agency Sign & Stamp|Embassy & Court Approved|Courier across ${CN}` },
-        { tier: 3, name: 'Express & Notarized', price: `₹${pExp}`, unit: 'per page', delivery: '24 Hours Express', badge: 'EXPRESS', feats: `Urgent 24-hr turnaround|Notarized with Advocate Stamp|Apostille/Embassy ready|Priority linguist assignment|Free express shipping` }
+        { tier: 3, name: 'Express & Notarized', price: `₹${pExp}`, unit: 'per page', delivery: '24 Hours Express', badge: '', feats: `Urgent 24-hr turnaround|Notarized with Advocate Stamp|Apostille/Embassy ready|Priority linguist assignment|Free express shipping` }
       ];
 
   // 7. Why Choose List (Inherit from service)
