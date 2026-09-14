@@ -1039,7 +1039,7 @@ async function seedHomeSections() {
       buttonText: 'Get Document Quote →', buttonLink: '/services/document',
     },
     {
-      sectionId: 'certified', tag: 'Certified Services', sortOrder: 40, layout: 'image-right',
+      sectionId: 'certified', tag: 'Certified Services', sortOrder: 40, layout: 'image-left',
       title: 'Certified <em>Translation Services</em>',
       content:
         '<p>ISO-9001:2015 and ISO 17100:2015 certified translations accepted by embassies, consulates, courts and government offices worldwide. Each translation includes a signed translator declaration on official letterhead, making it embassy-ready without additional certification.</p><p>Our certified translators are native speakers and qualified professionals trained in legal, medical, technical and academic terminology, with delivery as fast as 24 hours.</p>',
@@ -1047,9 +1047,9 @@ async function seedHomeSections() {
     },
     {
       sectionId: 'interpreter', tag: 'Expert Services', sortOrder: 50, layout: 'image-right',
-      title: 'Expert &amp; Qualified <em>Interpreter Services</em>',
+      title: 'Expert & Qualified <em>Interpreter Services</em>',
       content:
-        '<p>Multilingual interpretation across India for businesses, legal proceedings, medical consultations, government bodies and academic institutions. Our interpreters are certified subject-matter experts.</p><p>We cover simultaneous, consecutive, telephone and escort interpretation in 120+ language pairs, and provide equipment including booths, receivers and microphones for large events. Remote video and telephone interpretation is available for urgent requirements.</p>',
+        '<p>Language Guru provides expert multilingual interpretation services across India for businesses, legal proceedings, medical consultations, government bodies, international organisations and academic institutions. Our interpreters are certified professionals with domain expertise in law, medicine, engineering, finance and diplomacy.</p><p>We offer simultaneous, consecutive, whisper (chuchotage), liaison and escort interpretation in 120+ languages including French, German, Spanish, Japanese, Chinese, Russian, Arabic, Portuguese and all major Indian languages. Whether you need an interpreter for an international conference in Delhi, a court hearing in Mumbai, a medical consultation in Chennai or a business negotiation in Bangalore, we provide qualified professionals on-site and remotely.</p><p>Our conference interpretation services include complete equipment support — soundproof ISO-standard interpreter booths, multi-channel digital transmitters, wireless receivers and headsets, delegate microphones and on-site audio technicians. We manage end-to-end simultaneous interpretation setups for events ranging from 20 to 2,000+ delegates.</p><p>For urgent requirements, we offer Remote Simultaneous Interpretation (RSI) and Over-the-Phone Interpretation (OPI) via Zoom, Microsoft Teams, Webex and dedicated RSI platforms — connecting you with a qualified interpreter within 2 hours anywhere in India or internationally.</p>',
       buttonText: 'Book Interpreter →', buttonLink: '/quote',
     },
   ];

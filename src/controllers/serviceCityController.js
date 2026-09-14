@@ -244,7 +244,7 @@ function buildDefaultCityOverride(service, city) {
     ogImage: '',
     heroBadge: svcCO.heroBadge ? localizeText(svcCO.heroBadge) : `#1 ${SN} in ${CN}`,
     heroIso: svcCO.heroIso || 'ISO 17100:2015 & ISO 9001:2015 Certified',
-    heroTitle: `${SN} Services in <em>${CN}</em>`,
+    heroTitle: `${SN}<br>Services in <em>${CN}</em>`,
     heroSub: svcCO.heroSub ? localizeText(svcCO.heroSub) : `Language Guru is ${CN}'s leading ${snLow} agency – ISO-9001:2015 and ISO 17100:2015 certified. 120+ languages, 50,000+ documents delivered, accepted by all embassies, courts and universities. Serving ${CN} since 2005.`,
     heroBgImage: '',
     heroBtn1Text: svcCO.heroBtn1Text || '📋 Get Free Quote',
