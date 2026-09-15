@@ -233,7 +233,7 @@ function buildDefaultLanguageCityOverride(language, city) {
     heroFlag: FLAG + " " + LN + " Translation Services · " + CN,
     heroIso: "ISO 17100:2015 & ISO 9001:2015 Certified",
     heroTitle: LN + " Translation\nServices in " + CN,
-    heroSub: "Language Guru is " + CN + "'s leading " + lnLow + " translation agency — ISO-9001:2015 and ISO 17100:2015 certified. 120+ language pairs, 50,000+ documents delivered, accepted by all embassies, courts and universities. Serving " + CN + " since 2005.",
+    heroSub: "Professional, certified " + LN + "↔English/Hindi translation services in " + CN + ". Accepted by embassies, MEA, courts and government authorities. Serving India since 2005.",
     heroBgImage: "",
     heroBtn1Text: "📋 Get Free Quote",
     heroBtn1Link: "/quote",
