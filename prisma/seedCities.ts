@@ -152,7 +152,7 @@ const METROS = new Set([
 function generateCityContentOverrides(name: string, state: string) {
   return {
     heroTitle: `Certified Translation Services in <em>${name}</em>`,
-    heroSub: `ISO-9001:2015 & ISO 17100:2015 certified translation agency in ${name}, ${state}. Embassy-accepted, court-approved translations across 120+ international & Indian regional languages with 24-hour express delivery.`,
+    heroSub: `certified translation services in 120+ languages in ${name}. Embassy-accepted, government-authorized. Documents accepted via email / WhatsApp. Serving India since 2005.`,
     aboutTitle: `Leading Certified Translation Agency in ${name}, ${state}`,
     aboutParagraphs: [
       `Language Guru is a premier ISO-9001:2015 and ISO 17100:2015 certified translation agency serving clients in ${name} and across ${state}. We specialize in high-accuracy certified translations for immigration, academic admissions, legal proceedings, corporate documentation, and medical records.`,
