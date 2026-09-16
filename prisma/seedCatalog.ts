@@ -40,14 +40,14 @@ export const slugify = (v: string) =>
     .replace(/(^-|-$)+/g, '');
 
 const INDUSTRIES = [
-  { icon: '⚖️',  name: 'Legal & Court',        desc: 'Contracts · Patents · Court Orders · Affidavits · Judgments',   svc: 'legal' },
-  { icon: '🏥',  name: 'Healthcare & Pharma',  desc: 'Pharma dossiers · Clinical trials · Medical records · Audits',  svc: 'medical' },
-  { icon: '🏭',  name: 'Manufacturing',        desc: 'Technical manuals · Engineering drawings · Machine installation', svc: 'technical' },
-  { icon: '💻',  name: 'Technology & IT',      desc: 'Software · API documentation · App & website localization',     svc: 'technical' },
-  { icon: '🏦',  name: 'Banking & Finance',    desc: 'Annual reports · Bank statements · Regulatory filings',         svc: 'financial' },
-  { icon: '🎓',  name: 'Education & Academic', desc: 'Degree certificates · Transcripts · Research papers · DDV',     svc: 'academic' },
-  { icon: '🏛️', name: 'Government & Public',  desc: 'Diplomatic correspondence · Tenders · Official documents',      svc: 'certified' },
-  { icon: '✈️',  name: 'Travel & Immigration', desc: 'Visa documents · PCC · Passport · Birth & marriage certificates', svc: 'visa' },
+  { icon: '⚖️',  name: 'Legal & Court',        desc: 'Contracts · Patents · Court Orders',   svc: 'legal' },
+  { icon: '🏥',  name: 'Healthcare & Pharma',  desc: 'Pharma · Clinical · Medical Records',  svc: 'medical' },
+  { icon: '🏭',  name: 'Manufacturing',        desc: 'Technical Manuals · Engineering', svc: 'technical' },
+  { icon: '💻',  name: 'Technology & IT',      desc: 'Software · API Docs · Localization',     svc: 'technical' },
+  { icon: '🏦',  name: 'Banking & Finance',    desc: 'Reports · Statements · Filings',         svc: 'financial' },
+  { icon: '🎓',  name: 'Education & Academic', desc: 'Certificates · Research · DDV',     svc: 'academic' },
+  { icon: '🏛️', name: 'Government & Public',  desc: 'Diplomatic · Official Docs',      svc: 'certified' },
+  { icon: '✈️',  name: 'Travel & Immigration', desc: 'Visa · PCC · Passport', svc: 'visa' },
 ];
 
 async function seedLanguages() {
