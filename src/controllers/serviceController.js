@@ -1,5 +1,6 @@
 const prisma = require('../config/db');
 const { validateSlug, slugify } = require('../config/slug');
+const { notifyFrontendRevalidate } = require('../utils/revalidate');
 
 // Get all services
 // BUG-10: the public site must only ever see published services, so a service can
@@ -61,6 +62,7 @@ const createService = async (req, res) => {
         slug: slugCheck.slug
       }
     });
+    notifyFrontendRevalidate();
     res.status(201).json({ success: true, data: service });
   } catch (error) {
     console.error('Error creating service:', error);
@@ -77,6 +79,27 @@ const updateService = async (req, res) => {
     if (!existing) {
       return res.status(404).json({ success: false, message: 'Service not found.' });
     }
+
+    let nextSlug = existing.slug || existing.key;
+    if (req.body.slug !== undefined) {
+      const slugCheck = await validateSlug({ model: 'service', raw: req.body.slug, id });
+      if (!slugCheck.ok) {
+        return res.status(slugCheck.status).json({ success: false, message: slugCheck.message });
+      }
+      nextSlug = slugCheck.slug;
+    }
+
+    let coObj = (contentOverrides !== undefined ? contentOverrides : existing.contentOverrides) || {};
+    if (typeof coObj === 'string') {
+      try { coObj = JSON.parse(coObj); } catch (e) { coObj = {}; }
+    }
+    const existingPrev = Array.isArray(coObj.previousSlugs) ? [...coObj.previousSlugs] : [];
+    if (existing.slug && existing.slug !== nextSlug) {
+      if (!existingPrev.includes(existing.slug)) {
+        existingPrev.push(existing.slug);
+      }
+    }
+    coObj.previousSlugs = existingPrev.filter(s => s !== nextSlug);
 
     const dataToUpdate = {
       name,
@@ -103,21 +126,13 @@ const updateService = async (req, res) => {
       metaDesc,
       faqs,
       reviews,
-      contentOverrides: contentOverrides !== undefined ? contentOverrides : existing.contentOverrides
+      contentOverrides: coObj,
+      slug: nextSlug
     };
     if (features !== undefined) dataToUpdate.features = features;
     if (docs !== undefined) dataToUpdate.docs = docs;
     // BUG-10: without this the isActive flag could never be turned off.
     if (isActive !== undefined) dataToUpdate.isActive = isActive;
-
-    // A submitted slug is validated; an absent one leaves the current URL alone.
-    if (req.body.slug !== undefined) {
-      const slugCheck = await validateSlug({ model: 'service', raw: req.body.slug, id });
-      if (!slugCheck.ok) {
-        return res.status(slugCheck.status).json({ success: false, message: slugCheck.message });
-      }
-      dataToUpdate.slug = slugCheck.slug;
-    }
 
     const service = await prisma.service.update({
       where: { id },
@@ -176,6 +191,7 @@ const updateService = async (req, res) => {
       }
     }
 
+    notifyFrontendRevalidate();
     res.status(200).json({ success: true, data: service });
   } catch (error) {
     console.error('Error updating service:', error);
@@ -193,6 +209,7 @@ const deleteService = async (req, res) => {
     }
 
     await prisma.service.delete({ where: { id } });
+    notifyFrontendRevalidate();
     res.status(200).json({ success: true, message: 'Service deleted successfully.' });
   } catch (error) {
     console.error('deleteService error:', error);

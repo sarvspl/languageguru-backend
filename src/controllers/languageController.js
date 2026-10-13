@@ -1,5 +1,6 @@
 const prisma = require('../config/db');
 const { validateSlug, slugify } = require('../config/slug');
+const { notifyFrontendRevalidate } = require('../utils/revalidate');
 
 // Helper to sanitize/parse JSON fields
 const parseJsonField = (field) => {
@@ -134,6 +135,7 @@ const createLanguage = async (req, res) => {
       slugCheck.slug
     );
 
+    notifyFrontendRevalidate();
     res.status(201).json({ success: true, data: formatLanguage(insertedRows[0]) });
   } catch (error) {
     console.error('createLanguage error:', error);
@@ -171,6 +173,17 @@ const updateLanguage = async (req, res) => {
       }
       nextSlug = slugCheck.slug;
     }
+
+    // Maintain previousSlugs array in contentOverrides for seamless 308 redirects
+    let coObj = (contentOverrides !== undefined ? parseJsonField(contentOverrides) : parseJsonField(existing.contentOverrides)) || {};
+    const existingPrev = Array.isArray(coObj.previousSlugs) ? [...coObj.previousSlugs] : [];
+    if (existing.slug && existing.slug !== nextSlug) {
+      if (!existingPrev.includes(existing.slug)) {
+        existingPrev.push(existing.slug);
+      }
+    }
+    // Remove nextSlug if it was previously recorded (e.g. reverting to origin)
+    coObj.previousSlugs = existingPrev.filter(s => s !== nextSlug);
 
     const sql = `
       UPDATE "Language"
@@ -214,7 +227,7 @@ const updateLanguage = async (req, res) => {
       metaDesc !== undefined ? metaDesc : existing.metaDesc,
       metaKeywords !== undefined ? metaKeywords : existing.metaKeywords,
       ogImage !== undefined ? ogImage : existing.ogImage,
-      contentOverrides !== undefined ? JSON.stringify(contentOverrides) : (existing.contentOverrides ? JSON.stringify(existing.contentOverrides) : null),
+      JSON.stringify(coObj),
       faqs !== undefined ? JSON.stringify(faqs) : (existing.faqs ? JSON.stringify(existing.faqs) : null),
       reviews !== undefined ? JSON.stringify(reviews) : (existing.reviews ? JSON.stringify(existing.reviews) : null),
       pricing !== undefined ? JSON.stringify(pricing) : (existing.pricing ? JSON.stringify(existing.pricing) : null),
@@ -223,6 +236,7 @@ const updateLanguage = async (req, res) => {
       existing.id
     );
 
+    notifyFrontendRevalidate();
     res.status(200).json({ success: true, data: formatLanguage(updatedRows[0]) });
   } catch (error) {
     console.error('updateLanguage error:', error);
@@ -245,6 +259,7 @@ const deleteLanguage = async (req, res) => {
     }
 
     await prisma.$queryRawUnsafe('DELETE FROM "Language" WHERE "id" = $1', existingRows[0].id);
+    notifyFrontendRevalidate();
     res.status(200).json({ success: true, message: 'Language deleted successfully.' });
   } catch (error) {
     console.error('deleteLanguage error:', error);

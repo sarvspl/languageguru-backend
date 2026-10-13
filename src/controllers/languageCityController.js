@@ -5,6 +5,7 @@
  */
 
 const prisma = require("../config/db");
+const { notifyFrontendRevalidate } = require("../utils/revalidate");
 
 function defaultSlug(languageKey, cityKey) {
   return languageKey + "-translation-services-in-" + cityKey;
@@ -469,6 +470,7 @@ const upsertLanguageCityOverride = async (req, res) => {
       create: { languageKey, cityKey, ...data },
       update: data
     });
+    notifyFrontendRevalidate();
     res.json({ success: true, data: record, message: "Saved successfully." });
   } catch (error) {
     console.error("upsertLanguageCityOverride error:", error);
@@ -483,6 +485,7 @@ const deleteLanguageCityOverride = async (req, res) => {
     const existing = await prisma.languageCityOverride.findUnique({ where: { languageKey_cityKey: { languageKey, cityKey } } });
     if (!existing) return res.status(404).json({ success: false, message: "No custom override found for this city." });
     await prisma.languageCityOverride.delete({ where: { languageKey_cityKey: { languageKey, cityKey } } });
+    notifyFrontendRevalidate();
     res.json({ success: true, message: "Custom city override removed." });
   } catch (error) {
     console.error("deleteLanguageCityOverride error:", error);

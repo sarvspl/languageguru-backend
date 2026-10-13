@@ -1,5 +1,6 @@
 const prisma = require('../config/db');
 const { validateSlug, slugify } = require('../config/slug');
+const { notifyFrontendRevalidate } = require('../utils/revalidate');
 
 // BUG-10: the public endpoint returns published cities only, so a city can be
 // taken off the site by deactivating it instead of deleting it permanently.
@@ -48,6 +49,7 @@ const createCity = async (req, res) => {
     const city = await prisma.city.create({
       data: { key, name, ic, state, isMetro, isActive: isActive !== undefined ? isActive : true, metaTitle, metaDesc, contentOverrides, faqs, reviews, slug: slugCheck.slug }
     });
+    notifyFrontendRevalidate();
     res.status(201).json({ success: true, data: city });
   } catch (error) {
     console.error('createCity error:', error);
@@ -65,22 +67,43 @@ const updateCity = async (req, res) => {
       return res.status(404).json({ success: false, message: 'City not found.' });
     }
 
-    const data = { name, ic, state, isMetro, metaTitle, metaDesc };
-    if (isActive !== undefined) data.isActive = isActive;
-    if (contentOverrides !== undefined) data.contentOverrides = contentOverrides;
-    if (faqs !== undefined) data.faqs = faqs;
-    if (reviews !== undefined) data.reviews = reviews;
-
-    // A submitted slug is validated; an absent one leaves the current URL alone.
+    let nextSlug = existing.slug || existing.key;
     if (req.body.slug !== undefined) {
       const slugCheck = await validateSlug({ model: 'city', raw: req.body.slug, id });
       if (!slugCheck.ok) {
         return res.status(slugCheck.status).json({ success: false, message: slugCheck.message });
       }
-      data.slug = slugCheck.slug;
+      nextSlug = slugCheck.slug;
     }
 
+    let coObj = (contentOverrides !== undefined ? contentOverrides : existing.contentOverrides) || {};
+    if (typeof coObj === 'string') {
+      try { coObj = JSON.parse(coObj); } catch (e) { coObj = {}; }
+    }
+    const existingPrev = Array.isArray(coObj.previousSlugs) ? [...coObj.previousSlugs] : [];
+    if (existing.slug && existing.slug !== nextSlug) {
+      if (!existingPrev.includes(existing.slug)) {
+        existingPrev.push(existing.slug);
+      }
+    }
+    coObj.previousSlugs = existingPrev.filter(s => s !== nextSlug);
+
+    const data = {
+      name,
+      ic,
+      state,
+      isMetro,
+      metaTitle,
+      metaDesc,
+      contentOverrides: coObj,
+      slug: nextSlug
+    };
+    if (isActive !== undefined) data.isActive = isActive;
+    if (faqs !== undefined) data.faqs = faqs;
+    if (reviews !== undefined) data.reviews = reviews;
+
     const city = await prisma.city.update({ where: { id }, data });
+    notifyFrontendRevalidate();
     res.status(200).json({ success: true, data: city });
   } catch (error) {
     console.error('updateCity error:', error);
@@ -98,6 +121,7 @@ const deleteCity = async (req, res) => {
     }
 
     await prisma.city.delete({ where: { id } });
+    notifyFrontendRevalidate();
     res.status(200).json({ success: true, message: 'City deleted successfully.' });
   } catch (error) {
     console.error('deleteCity error:', error);

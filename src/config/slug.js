@@ -8,7 +8,7 @@ const prisma = require('./db');
  * same URL namespace, so /services/legal can never collide with a second row.
  */
 
-const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const SLUG_RE = /^[a-z0-9()_-]+(?:-[a-z0-9()_-]+)*$/;
 
 // Path segments the router owns.
 const RESERVED = new Set([
@@ -20,7 +20,13 @@ const normalise = (raw) =>
   String(raw ?? '').trim().replace(/^\/+|\/+$/g, '').toLowerCase();
 
 const slugify = (raw) =>
-  normalise(raw).replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+  normalise(raw)
+    .replace(/\s*\(\s*/g, '(')
+    .replace(/\s*\)\s*/g, ')')
+    .replace(/\)(?=[a-z0-9])/g, ')-')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9()_-]+/g, '-')
+    .replace(/(^-|-$)+/g, '');
 
 /**
  * Validate a slug for one model.
@@ -43,7 +49,7 @@ async function validateSlug({ model, raw, id, label = 'item' }) {
       ok: false,
       status: 400,
       message:
-        'Slug may contain lower-case letters, numbers and single hyphens only — for example "legal-translation".',
+        'Slug may contain lower-case letters, numbers, hyphens and parentheses only.',
     };
   }
   if (RESERVED.has(slug)) {

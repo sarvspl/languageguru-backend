@@ -4,6 +4,7 @@
  */
 
 const prisma = require("../config/db");
+const { notifyFrontendRevalidate } = require("../utils/revalidate");
 // slug uniqueness checked manually below
 
 function defaultSlug(serviceKey, cityKey) {
@@ -501,6 +502,7 @@ const upsertServiceCityOverride = async (req, res) => {
       create: { serviceKey, cityKey, ...data },
       update: data,
     });
+    notifyFrontendRevalidate();
     res.json({ success: true, data: record, message: "Saved successfully." });
   } catch (error) {
     console.error("upsertServiceCityOverride error:", error);
@@ -515,6 +517,7 @@ const deleteServiceCityOverride = async (req, res) => {
     const existing = await prisma.serviceCityOverride.findUnique({ where: { serviceKey_cityKey: { serviceKey, cityKey } } });
     if (!existing) return res.status(404).json({ success: false, message: "No custom override found for this city." });
     await prisma.serviceCityOverride.delete({ where: { serviceKey_cityKey: { serviceKey, cityKey } } });
+    notifyFrontendRevalidate();
     res.json({ success: true, message: "Custom city override removed." });
   } catch (error) {
     console.error("deleteServiceCityOverride error:", error);
