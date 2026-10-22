@@ -1,4 +1,5 @@
 const prisma = require('../config/db');
+const { notifyFrontendRevalidate } = require('../utils/revalidate');
 
 const sectionSelect = {
   id: true,
@@ -146,6 +147,7 @@ const createPage = async (req, res) => {
       data,
       include: { sections: { orderBy: { sortOrder: 'asc' }, select: sectionSelect } },
     });
+    notifyFrontendRevalidate();
     return res.status(201).json({ success: true, data: shape(page), message: 'Page created.' });
   } catch (error) {
     if (error && error.code === 'P2002') {
@@ -211,6 +213,7 @@ const updatePage = async (req, res) => {
       data,
       include: { sections: { orderBy: { sortOrder: 'asc' }, select: sectionSelect } },
     });
+    notifyFrontendRevalidate();
     return res.status(200).json({ success: true, data: shape(page), message: 'Page updated.' });
   } catch (error) {
     if (error && error.code === 'P2002') {
@@ -269,6 +272,7 @@ const upsertSection = async (req, res) => {
       create: { pageKey: key, sectionKey, kind: data.kind || 'richtext', ...data },
       select: sectionSelect,
     });
+    notifyFrontendRevalidate();
     return res.status(200).json({ success: true, data: section, message: 'Section saved.' });
   } catch (error) {
     console.error('upsertSection error:', error);
@@ -281,9 +285,10 @@ const deleteSection = async (req, res) => {
   try {
     const { key, sectionKey } = req.params;
     await prisma.pageSection.delete({ where: { pageKey_sectionKey: { pageKey: key, sectionKey } } });
+    notifyFrontendRevalidate();
     return res.status(200).json({ success: true, message: 'Section deleted.' });
   } catch (error) {
-    if (error && error.code === 'P2025') {
+    if (error && error.code === 'P2002' || error && error.code === 'P2025') {
       return res.status(404).json({ success: false, message: 'Section not found.' });
     }
     console.error('deleteSection error:', error);
@@ -311,6 +316,7 @@ const deletePage = async (req, res) => {
         data: { isActive: false },
         include: { sections: { orderBy: { sortOrder: 'asc' }, select: sectionSelect } },
       });
+      notifyFrontendRevalidate();
       return res.status(200).json({
         success: true,
         data: shape(page),
@@ -320,6 +326,7 @@ const deletePage = async (req, res) => {
 
     // PageSection cascades on the pageKey relation.
     await prisma.sitePage.delete({ where: { key } });
+    notifyFrontendRevalidate();
     return res.status(200).json({ success: true, message: `Page "${existing.title}" deleted.` });
   } catch (error) {
     if (error && error.code === 'P2025') {
@@ -356,6 +363,7 @@ const saveSections = async (req, res) => {
       where: { key },
       include: { sections: { orderBy: { sortOrder: 'asc' }, select: sectionSelect } },
     });
+    notifyFrontendRevalidate();
     return res.status(200).json({ success: true, data: shape(updated), message: `${sections.length} sections saved.` });
   } catch (error) {
     console.error('saveSections error:', error);
