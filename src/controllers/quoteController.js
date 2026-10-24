@@ -1,5 +1,5 @@
 const prisma = require('../config/db');
-const { sendAdminLeadNotification } = require('../utils/emailNotifier');
+const { isValidEmail, sendAdminLeadNotification, sendCustomerLeadConfirmation } = require('../utils/emailNotifier');
 
 // Submit quote request (Public)
 const submitQuote = async (req, res) => {
@@ -86,6 +86,22 @@ const submitQuote = async (req, res) => {
       city,
       message
     }).catch(err => console.error('Admin notification error:', err));
+
+    // Trigger customer confirmation email (fail-safe asynchronous execution)
+    if (isValidEmail(quote.email)) {
+      sendCustomerLeadConfirmation({
+        toEmail: String(quote.email).trim(),
+        name: quote.name,
+        referenceId,
+        serviceKey: quote.serviceKey,
+        sourceLang: quote.sourceLang,
+        targetLang: quote.targetLang,
+        pages: quote.pages,
+        isInterpreter: quote.isInterpreter,
+        city,
+        notes: quote.notes
+      }).catch(err => console.error('Customer confirmation error:', err));
+    }
 
     return res.status(201).json({
       success: true,

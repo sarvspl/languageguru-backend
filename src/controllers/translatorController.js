@@ -1,4 +1,5 @@
 const prisma = require('../config/db');
+const { sendLinguistApplicationNotifications } = require('../utils/emailNotifier');
 
 // Get all translators (public — active only)
 const getTranslators = async (req, res) => {
@@ -26,12 +27,24 @@ const getAllTranslators = async (req, res) => {
 // Create a translator
 const createTranslator = async (req, res) => {
   try {
-    const { name, lang, city, spec, exp, rate, cert, isActive } = req.body;
+    const { name, lang, city, spec, exp, rate, cert, email, phone, resumeUrl, isActive } = req.body;
     if (!name || !lang || !city) {
       return res.status(400).json({ success: false, message: 'name, lang, and city are required.' });
     }
     const translator = await prisma.translator.create({
-      data: { name, lang, city, spec, exp, rate, cert, isActive: isActive !== false }
+      data: {
+        name,
+        lang,
+        city,
+        spec,
+        exp,
+        rate,
+        cert,
+        email: email ? email.trim() : null,
+        phone: phone ? phone.trim() : null,
+        resumeUrl: resumeUrl || null,
+        isActive: isActive !== false
+      }
     });
     res.status(201).json({ success: true, data: translator });
   } catch (error) {
@@ -43,13 +56,25 @@ const createTranslator = async (req, res) => {
 const updateTranslator = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, lang, city, spec, exp, rate, cert, isActive } = req.body;
+    const { name, lang, city, spec, exp, rate, cert, email, phone, resumeUrl, isActive } = req.body;
     const existing = await prisma.translator.findUnique({ where: { id } });
     if (!existing) return res.status(404).json({ success: false, message: 'Translator not found.' });
 
     const translator = await prisma.translator.update({
       where: { id },
-      data: { name, lang, city, spec, exp, rate, cert, isActive }
+      data: {
+        name,
+        lang,
+        city,
+        spec,
+        exp,
+        rate,
+        cert,
+        email: email !== undefined ? (email ? email.trim() : null) : existing.email,
+        phone: phone !== undefined ? (phone ? phone.trim() : null) : existing.phone,
+        resumeUrl: resumeUrl !== undefined ? resumeUrl : existing.resumeUrl,
+        isActive
+      }
     });
     res.status(200).json({ success: true, data: translator });
   } catch (error) {
@@ -80,6 +105,11 @@ const applyTranslator = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Name and city are required.' });
     }
 
+    let resumeUrl = req.body.resumeUrl || null;
+    if (req.file) {
+      resumeUrl = `/uploads/${req.file.filename}`;
+    }
+
     const expStr = experience ? (String(experience).toLowerCase().includes('year') ? experience : `${experience} exp`) : '3+ years';
     const langStr = tgtLang ? tgtLang.trim() : (srcLang ? srcLang.trim() : 'English');
     const certStr = cert ? cert.trim() : `Certified ${langStr} Specialist`;
@@ -95,6 +125,9 @@ const applyTranslator = async (req, res) => {
         exp: expStr,
         rate: rateStr,
         cert: certStr,
+        email: email ? email.trim() : null,
+        phone: mobile ? mobile.trim() : null,
+        resumeUrl: resumeUrl || null,
         isActive: true
       }
     });
@@ -112,6 +145,7 @@ const applyTranslator = async (req, res) => {
         `Language Pair: ${srcLang || 'N/A'} → ${tgtLang || 'N/A'}`,
         `Expertise: ${specStr}`,
         `Experience: ${expStr}`,
+        resumeUrl ? `Resume: ${resumeUrl}` : (req.body.fileName ? `Uploaded File: ${req.body.fileName}` : ''),
         intro ? `Cover Note: ${intro}` : ''
       ].filter(Boolean).join('\n');
 
@@ -131,6 +165,23 @@ const applyTranslator = async (req, res) => {
     } catch (leadErr) {
       console.warn('Failed to record applicant in QuoteRequest:', leadErr);
     }
+
+    // Trigger dual email notification (Admin alert + Applicant confirmation)
+    const originalFileName = req.file ? req.file.originalname : (req.body.fileName || null);
+    sendLinguistApplicationNotifications({
+      referenceId: `LG-JOIN-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      name: translator.name,
+      email: translator.email,
+      phone: translator.phone,
+      city: translator.city,
+      srcLang,
+      tgtLang,
+      expertise: specStr,
+      experience: expStr,
+      intro,
+      resumeUrl: translator.resumeUrl,
+      originalFileName
+    }).catch(emailErr => console.error('Linguist application email notification error:', emailErr));
 
     res.status(201).json({
       success: true,

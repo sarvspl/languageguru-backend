@@ -29,6 +29,7 @@ const clientsPageRoutes = require('./routes/clientsPageRoutes');
 const sitePageRoutes = require('./routes/sitePageRoutes');
 const serviceCityRoutes = require('./routes/serviceCityRoutes');
 const languageCityRoutes = require('./routes/languageCityRoutes');
+const blogRoutes = require('./routes/blogRoutes');
 const app = express();
 const PORT = env.PORT;
 
@@ -109,6 +110,7 @@ app.use('/api/v1/about', aboutRoutes);
 app.use('/api/v1/contact', contactRoutes);
 app.use('/api/v1/clients-page', clientsPageRoutes);
 app.use('/api/v1/site-pages', sitePageRoutes);
+app.use('/api/v1/blogs', blogRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 // Service + City localized overrides:
 // /:serviceKey/cities endpoints (admin CRUD) + /all-overrides (public, for Next.js routing & sitemap)
@@ -123,7 +125,62 @@ app.use('/api/v1/language-city-overrides', languageCityRoutes);
 
 // Serve uploads folder statically
 const path = require('path');
+const fs = require('fs');
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Professional direct file download endpoint for resumes & documents (PDF, DOCX, XLSX, etc.)
+const MIME_TYPES = {
+  '.pdf': 'application/pdf',
+  '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  '.doc': 'application/msword',
+  '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  '.xls': 'application/vnd.ms-excel',
+  '.txt': 'text/plain',
+  '.rtf': 'application/rtf',
+  '.csv': 'text/csv'
+};
+
+app.get('/api/v1/download/:filename', (req, res) => {
+  const safeFilename = path.basename(req.params.filename);
+  const uploadsDir = path.join(__dirname, '../uploads');
+  let targetFile = path.join(uploadsDir, safeFilename);
+
+  // Fallback checks if exact match doesn't exist
+  if (!fs.existsSync(targetFile)) {
+    if (fs.existsSync(targetFile + '.docx')) {
+      targetFile = targetFile + '.docx';
+    } else if (safeFilename.endsWith('.docx.docx') && fs.existsSync(path.join(uploadsDir, safeFilename.replace(/\.docx\.docx$/, '.docx')))) {
+      targetFile = path.join(uploadsDir, safeFilename.replace(/\.docx\.docx$/, '.docx'));
+    } else {
+      return res.status(404).json({ success: false, message: 'Requested file not found on server.' });
+    }
+  }
+
+  // Provide a clean display filename for the download attachment
+  let downloadAs = safeFilename;
+  // Clean double extensions
+  downloadAs = downloadAs.replace(/\.docx\.docx$/i, '.docx')
+                         .replace(/\.pdf\.pdf$/i, '.pdf')
+                         .replace(/\.xlsx\.xlsx$/i, '.xlsx')
+                         .replace(/\.xls\.xls$/i, '.xls');
+  // Strip multer timestamp prefix for user-facing download (e.g. 1792756754464-422338936-resume.docx -> resume.docx)
+  downloadAs = downloadAs.replace(/^\d+-\d+-/, '');
+
+  const ext = path.extname(downloadAs).toLowerCase();
+  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+
+  res.setHeader('Content-Type', contentType);
+  if (ext === '.pdf') {
+    res.setHeader('Content-Disposition', 'inline; filename="' + downloadAs + '"');
+    return res.sendFile(targetFile);
+  }
+  res.download(targetFile, downloadAs, (err) => {
+    if (err && !res.headersSent) {
+      console.error('Download error:', err);
+      res.status(500).json({ success: false, message: 'Failed to download file.' });
+    }
+  });
+});
 
 // CFG-09: unmatched API routes must return JSON, not Express's HTML error page,
 // so client-side error handling can parse the response.

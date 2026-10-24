@@ -17,11 +17,11 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname || '') || '.jpg';
-    const cleanName = (file.originalname || 'upload')
-      .replace(/[^a-zA-Z0-9.-]/g, '_')
+    const baseName = path.basename(file.originalname || 'upload', ext)
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
       .slice(0, 30);
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + cleanName + ext);
+    cb(null, `${uniqueSuffix}-${baseName}${ext}`);
   }
 });
 

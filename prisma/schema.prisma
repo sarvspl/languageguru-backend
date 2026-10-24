@@ -158,6 +158,9 @@ model Translator {
   exp       String? // Experience e.g. "8 years"
   rate      String? // Rate e.g. "₹899/pg"
   cert      String? // Certification e.g. "MA Translation"
+  email     String?
+  phone     String?
+  resumeUrl String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -766,3 +769,36 @@ model LanguageCityOverride {
   @@index([cityKey])
 }
 
+
+
+// ═══════════════════════════════════════════════════════════════
+// Blog & Editorial Content Module
+// ═══════════════════════════════════════════════════════════════
+model BlogPost {
+  id           String    @id @default(uuid())
+  title        String
+  slug         String    @unique
+  excerpt      String?
+  content      String    // Rich text HTML / formatted body
+  category     String    @default("Translation") // Translation, Apostille, Visa, Legal, Interpretation
+  coverImage   String?   // Featured banner image URL
+  author       String    @default("Language Guru Editorial Team")
+  readTime     String?   @default("4 min read")
+  metaTitle    String?
+  metaDesc     String?
+  metaKeywords String?
+  ogTitle      String?
+  ogDesc       String?
+  ogImage      String?
+  shareWhatsApp String?
+  shareLinkedIn String?
+  shareTwitter  String?
+  isPublished  Boolean   @default(true)
+  publishedAt  DateTime? @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([category])
+  @@index([isPublished])
+}
