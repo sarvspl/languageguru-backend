@@ -4,15 +4,16 @@ const { isValidEmail, sendAdminLeadNotification, sendCustomerLeadConfirmation } 
 // Submit quote request (Public)
 const submitQuote = async (req, res) => {
   try {
-    const { name, email, phone, serviceKey, sourceLang, targetLang, pages, isInterpreter, notes, service, city, message } = req.body;
+    const {
+      name, email, phone, serviceKey, sourceLang, targetLang, pages, isInterpreter,
+      notes, service, city, message, docType, addons, estimatedTotal, uploadedFiles, userNotes
+    } = req.body;
 
     if (!name || !phone) {
       return res.status(400).json({ success: false, message: 'Name and phone are required.' });
     }
 
-    // SEC-08: bound every free-text field. Unbounded `notes` is the natural
-    // target for spam flooding now that the endpoint is public and rate-limited
-    // only per IP.
+    // SEC-08: bound every free-text field.
     const cap = (v, n) => (typeof v === 'string' ? v.trim().slice(0, n) : v);
     if (String(name).trim().length > 120 || String(phone).trim().length > 32) {
       return res.status(400).json({ success: false, message: 'Name or phone is too long.' });
@@ -47,15 +48,71 @@ const submitQuote = async (req, res) => {
       cleanKey = cleanKey.split(' — ')[0].split(' - ')[0].trim();
     }
     const finalServiceKey = cleanKey;
-    const finalNotes = notes || [
-      city ? `City: ${city}` : '',
-      message ? `Message: ${message}` : ''
-    ].filter(Boolean).join('\n') || null;
+
+    // Extract all structured fields from request body or notes string
+    let effectiveCity = city;
+    if (!effectiveCity && notes && typeof notes === 'string') {
+      const match = notes.match(/City:\s*([^|\n,]+)/i);
+      if (match && match[1] && match[1].trim() !== 'N/A') {
+        effectiveCity = match[1].trim();
+      }
+    }
+
+    let effectiveDocType = docType;
+    if (!effectiveDocType && notes && typeof notes === 'string') {
+      const match = notes.match(/DocType:\s*([^|\n]+)/i);
+      if (match && match[1] && match[1].trim() !== 'N/A') {
+        effectiveDocType = match[1].trim();
+      }
+    }
+
+    let effectiveAddons = addons;
+    if (!effectiveAddons && notes && typeof notes === 'string') {
+      const match = notes.match(/Add-ons:\s*([^|\n]+)/i);
+      if (match && match[1]) effectiveAddons = match[1].trim();
+    }
+
+    let effectiveTotal = estimatedTotal;
+    if (!effectiveTotal && notes && typeof notes === 'string') {
+      const match = notes.match(/Total:\s*([^|\n]+)/i);
+      if (match && match[1]) effectiveTotal = match[1].trim();
+    }
+
+    let effectiveFiles = uploadedFiles;
+    if (!effectiveFiles && notes && typeof notes === 'string') {
+      const match = notes.match(/Files:\s*([^|\n]+)/i);
+      if (match && match[1]) effectiveFiles = match[1].trim();
+    }
+
+    let cleanUserNotes = (userNotes || message || '').trim();
+    if (!cleanUserNotes && notes && typeof notes === 'string') {
+      if (notes.includes('DocType:')) {
+        const parts = notes.split('|');
+        if (parts.length >= 3) {
+          cleanUserNotes = parts.slice(2).join('|').trim();
+        }
+      } else if (notes.includes('Message:')) {
+        const match = notes.match(/Message:\s*([\s\S]+)/i);
+        if (match && match[1]) cleanUserNotes = match[1].trim();
+      } else if (!notes.startsWith('City:') && !notes.startsWith('Ref:')) {
+        cleanUserNotes = notes.trim();
+      }
+    }
 
     const year = new Date().getFullYear();
     const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
     const referenceId = `LG-${year}-${randomSuffix}`;
-    const leadNotesWithRef = `Ref: ${referenceId} | ` + (finalNotes ? finalNotes : '');
+
+    // Structure complete notes containing reference, city, doc type, addons, and full user notes
+    const leadNotesParts = [
+      `Ref: ${referenceId}`,
+      effectiveCity ? `City: ${effectiveCity}` : null,
+      effectiveDocType ? `DocType: ${effectiveDocType}` : null,
+      effectiveAddons && effectiveAddons !== 'None' ? `Add-ons: ${effectiveAddons}` : null,
+      effectiveTotal ? `Total: ${effectiveTotal}` : null,
+      effectiveFiles ? `Files: ${effectiveFiles}` : null,
+      cleanUserNotes ? `User Notes: ${cleanUserNotes}` : (notes && !notes.includes('DocType:') ? notes : null)
+    ].filter(Boolean).join(' | ');
 
     const quote = await prisma.quoteRequest.create({
       data: {
@@ -67,7 +124,7 @@ const submitQuote = async (req, res) => {
         targetLang: cap(targetLang, 60) || null,
         pages: Math.min(Math.max(parseInt(pages) || 1, 1), 10000),
         isInterpreter: Boolean(isInterpreter),
-        notes: cap(leadNotesWithRef, 4000)
+        notes: cap(leadNotesParts, 4000)
       }
     });
 
@@ -82,9 +139,14 @@ const submitQuote = async (req, res) => {
       targetLang: quote.targetLang,
       pages: quote.pages,
       isInterpreter: quote.isInterpreter,
+      city: effectiveCity,
+      docType: effectiveDocType,
+      addons: effectiveAddons,
+      estimatedTotal: effectiveTotal,
+      uploadedFiles: effectiveFiles,
+      userNotes: cleanUserNotes,
       notes: quote.notes,
-      city,
-      message
+      message: cleanUserNotes
     }).catch(err => console.error('Admin notification error:', err));
 
     // Trigger customer confirmation email (fail-safe asynchronous execution)
@@ -98,7 +160,12 @@ const submitQuote = async (req, res) => {
         targetLang: quote.targetLang,
         pages: quote.pages,
         isInterpreter: quote.isInterpreter,
-        city,
+        city: effectiveCity,
+        docType: effectiveDocType,
+        addons: effectiveAddons,
+        estimatedTotal: effectiveTotal,
+        uploadedFiles: effectiveFiles,
+        userNotes: cleanUserNotes,
         notes: quote.notes
       }).catch(err => console.error('Customer confirmation error:', err));
     }
@@ -116,8 +183,6 @@ const submitQuote = async (req, res) => {
 };
 
 // Get all quotes (Admin)
-// BUG-15: paginated. Returning every quote ever created was fine at 50 rows and
-// a multi-megabyte response at 50,000. `all=true` is kept for admin exports.
 const getQuotes = async (req, res) => {
   try {
     const { status, all } = req.query;

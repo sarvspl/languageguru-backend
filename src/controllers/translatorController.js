@@ -63,17 +63,17 @@ const updateTranslator = async (req, res) => {
     const translator = await prisma.translator.update({
       where: { id },
       data: {
-        name,
-        lang,
-        city,
-        spec,
-        exp,
-        rate,
-        cert,
+        name: name !== undefined ? name : existing.name,
+        lang: lang !== undefined ? lang : existing.lang,
+        city: city !== undefined ? city : existing.city,
+        spec: spec !== undefined ? spec : existing.spec,
+        exp: exp !== undefined ? exp : existing.exp,
+        rate: rate !== undefined ? rate : existing.rate,
+        cert: cert !== undefined ? cert : existing.cert,
         email: email !== undefined ? (email ? email.trim() : null) : existing.email,
         phone: phone !== undefined ? (phone ? phone.trim() : null) : existing.phone,
         resumeUrl: resumeUrl !== undefined ? resumeUrl : existing.resumeUrl,
-        isActive
+        isActive: isActive !== undefined ? isActive : existing.isActive
       }
     });
     res.status(200).json({ success: true, data: translator });
@@ -111,7 +111,7 @@ const applyTranslator = async (req, res) => {
     }
 
     const expStr = experience ? (String(experience).toLowerCase().includes('year') ? experience : `${experience} exp`) : '3+ years';
-    const langStr = tgtLang ? tgtLang.trim() : (srcLang ? srcLang.trim() : 'English');
+    const langStr = (srcLang && tgtLang) ? `${srcLang.trim()} → ${tgtLang.trim()}` : (tgtLang ? tgtLang.trim() : (srcLang ? srcLang.trim() : 'English'));
     const certStr = cert ? cert.trim() : `Certified ${langStr} Specialist`;
     const rateStr = rate ? rate.trim() : '₹850/pg';
     const specStr = expertise ? expertise.trim() : 'General';
@@ -128,43 +128,9 @@ const applyTranslator = async (req, res) => {
         email: email ? email.trim() : null,
         phone: mobile ? mobile.trim() : null,
         resumeUrl: resumeUrl || null,
-        isActive: true
+        isActive: false // Set to false by default — requires Admin approval to appear on frontend!
       }
     });
-
-    // Also record application into QuoteRequest for admin notification / lead tracking
-    try {
-      const year = new Date().getFullYear();
-      const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
-      const referenceId = `LG-JOIN-${year}-${randomSuffix}`;
-      const notes = [
-        `Applicant Name: ${name}`,
-        `Phone: ${mobile || 'N/A'}`,
-        `Email: ${email || 'N/A'}`,
-        `City: ${city}`,
-        `Language Pair: ${srcLang || 'N/A'} → ${tgtLang || 'N/A'}`,
-        `Expertise: ${specStr}`,
-        `Experience: ${expStr}`,
-        resumeUrl ? `Resume: ${resumeUrl}` : (req.body.fileName ? `Uploaded File: ${req.body.fileName}` : ''),
-        intro ? `Cover Note: ${intro}` : ''
-      ].filter(Boolean).join('\n');
-
-      await prisma.quoteRequest.create({
-        data: {
-          name: name.trim(),
-          email: email ? email.trim() : null,
-          phone: mobile ? mobile.trim() : 'N/A',
-          serviceKey: 'Linguist Application',
-          sourceLang: srcLang || null,
-          targetLang: tgtLang || null,
-          pages: 1,
-          isInterpreter: false,
-          notes: `Ref: ${referenceId} | ${notes}`
-        }
-      });
-    } catch (leadErr) {
-      console.warn('Failed to record applicant in QuoteRequest:', leadErr);
-    }
 
     // Trigger dual email notification (Admin alert + Applicant confirmation)
     const originalFileName = req.file ? req.file.originalname : (req.body.fileName || null);
@@ -185,7 +151,7 @@ const applyTranslator = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Application submitted successfully! Your profile is now visible on our translation team page.',
+      message: 'Application submitted successfully! Our team will review your application within 2-3 working days.',
       data: translator
     });
   } catch (error) {

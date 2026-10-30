@@ -1,4 +1,10 @@
+const crypto = require('crypto');
 const prisma = require('../config/db');
+const {
+  isValidEmail,
+  sendAdminContactInquiryNotification,
+  sendCustomerContactInquiryConfirmation
+} = require('../utils/emailNotifier');
 
 const DEFAULT_CONTACT = {
   id: 'singleton',
@@ -66,7 +72,7 @@ const getContactData = async () => {
   return newRows[0] || DEFAULT_CONTACT;
 };
 
-// GET /api/v1/contact
+// GET /api/v1/contact (Public CMS content)
 exports.getContact = async (req, res) => {
   try {
     const contact = await getContactData();
@@ -91,7 +97,7 @@ exports.getContact = async (req, res) => {
   }
 };
 
-// PUT /api/v1/contact
+// PUT /api/v1/contact (Admin CMS update)
 exports.updateContact = async (req, res) => {
   try {
     const allowedFields = [
@@ -168,5 +174,158 @@ exports.updateContact = async (req, res) => {
   } catch (error) {
     console.error('Error in updateContact:', error);
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONTACT INQUIRIES MANAGEMENT (Public Submission & Admin Viewing)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// POST /api/v1/contact/inquiry (Public submission from /contact page)
+exports.submitContactInquiry = async (req, res) => {
+  try {
+    const { name, phone, email, city, service, message } = req.body;
+
+    if (!name || !phone) {
+      return res.status(400).json({ success: false, message: 'Full name and phone number are required.' });
+    }
+
+    if (email && !isValidEmail(email)) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid authentic email address.' });
+    }
+
+    const cleanName = String(name).trim().slice(0, 120);
+    const cleanPhone = String(phone).trim().slice(0, 32);
+    const cleanEmail = email ? String(email).trim().slice(0, 160) : null;
+    const cleanCity = city ? String(city).trim().slice(0, 100) : null;
+    const cleanService = service ? String(service).trim().slice(0, 120) : 'General Inquiry';
+    const cleanMessage = message ? String(message).trim().slice(0, 4000) : '';
+
+    const year = new Date().getFullYear();
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000).toString();
+    const referenceId = `LG-CNT-${year}-${randomSuffix}`;
+    const newId = crypto.randomUUID();
+
+    if (prisma.contactInquiry && typeof prisma.contactInquiry.create === 'function') {
+      await prisma.contactInquiry.create({
+        data: {
+          id: newId,
+          referenceId,
+          name: cleanName,
+          email: cleanEmail,
+          phone: cleanPhone,
+          city: cleanCity,
+          service: cleanService,
+          message: cleanMessage,
+          status: 'new'
+        }
+      });
+    } else {
+      await prisma.$executeRaw`
+        INSERT INTO "ContactInquiry" ("id", "referenceId", "name", "email", "phone", "city", "service", "message", "status", "createdAt", "updatedAt")
+        VALUES (${newId}, ${referenceId}, ${cleanName}, ${cleanEmail}, ${cleanPhone}, ${cleanCity}, ${cleanService}, ${cleanMessage}, 'new', NOW(), NOW())
+      `;
+    }
+
+    // Trigger Admin notification (asynchronous, non-blocking)
+    sendAdminContactInquiryNotification({
+      referenceId,
+      name: cleanName,
+      phone: cleanPhone,
+      email: cleanEmail,
+      city: cleanCity,
+      service: cleanService,
+      message: cleanMessage
+    }).catch(err => console.error('[CONTACT INQUIRY] Admin email notification error:', err));
+
+    // Trigger Customer confirmation (if valid email provided)
+    if (isValidEmail(cleanEmail)) {
+      sendCustomerContactInquiryConfirmation({
+        toEmail: cleanEmail,
+        name: cleanName,
+        city: cleanCity,
+        referenceId,
+        service: cleanService,
+        message: cleanMessage
+      }).catch(err => console.error('[CONTACT INQUIRY] Customer confirmation email error:', err));
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Thank you! Your message has been sent successfully.',
+      refId: referenceId
+    });
+  } catch (error) {
+    console.error('Error submitting contact inquiry:', error);
+    return res.status(500).json({ success: false, message: 'Failed to submit contact message.' });
+  }
+};
+
+// GET /api/v1/contact/inquiries (Admin fetch all submitted contact inquiries)
+exports.getContactInquiries = async (req, res) => {
+  try {
+    let inquiries = [];
+    if (prisma.contactInquiry && typeof prisma.contactInquiry.findMany === 'function') {
+      inquiries = await prisma.contactInquiry.findMany({
+        orderBy: { createdAt: 'desc' }
+      });
+    } else {
+      inquiries = await prisma.$queryRaw`
+        SELECT * FROM "ContactInquiry" ORDER BY "createdAt" DESC
+      `;
+    }
+
+    return res.status(200).json({ success: true, data: inquiries });
+  } catch (error) {
+    console.error('Error fetching contact inquiries:', error);
+    return res.status(500).json({ success: false, message: 'Server error fetching contact inquiries.' });
+  }
+};
+
+// PATCH /api/v1/contact/inquiries/:id/status (Admin update status)
+exports.updateContactInquiryStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const allowed = ['new', 'contacted', 'resolved'];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status value.' });
+    }
+
+    if (prisma.contactInquiry && typeof prisma.contactInquiry.update === 'function') {
+      await prisma.contactInquiry.update({
+        where: { id },
+        data: { status }
+      });
+    } else {
+      await prisma.$executeRaw`
+        UPDATE "ContactInquiry" SET "status" = ${status}, "updatedAt" = NOW() WHERE "id" = ${id}
+      `;
+    }
+
+    return res.status(200).json({ success: true, message: 'Status updated successfully.' });
+  } catch (error) {
+    console.error('Error updating inquiry status:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update status.' });
+  }
+};
+
+// DELETE /api/v1/contact/inquiries/:id (Admin delete inquiry)
+exports.deleteContactInquiry = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (prisma.contactInquiry && typeof prisma.contactInquiry.delete === 'function') {
+      await prisma.contactInquiry.delete({ where: { id } });
+    } else {
+      await prisma.$executeRaw`
+        DELETE FROM "ContactInquiry" WHERE "id" = ${id}
+      `;
+    }
+
+    return res.status(200).json({ success: true, message: 'Contact inquiry deleted successfully.' });
+  } catch (error) {
+    console.error('Error deleting contact inquiry:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete inquiry.' });
   }
 };

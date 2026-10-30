@@ -123,19 +123,26 @@ model QuoteRequest {
 }
 
 model GalleryItem {
-  id        String   @id @default(uuid())
-  doc       String // Document type e.g. "Birth Certificate"
-  lang      String // Language pair e.g. "English → German"
-  flag      String // Flag emoji e.g. "🇩🇪"
-  langKey   String? // language key e.g. "german"
-  time      String? // Turnaround time e.g. "24 Hrs"
-  icon      String? // Doc icon emoji e.g. "📜"
-  seal      String? // Seal emoji e.g. "🇩🇪"
-  acc       String? // Accepting authority e.g. "German Embassy"
-  cat       String   @default("General") // Category for filtering
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String   @id @default(uuid())
+  doc           String   // Document type e.g. "Birth Certificate"
+  lang          String   // Language pair e.g. "English → German"
+  flag          String   // Flag emoji e.g. "🇩🇪"
+  langKey       String?  // language key e.g. "german"
+  time          String?  // Turnaround time e.g. "24 Hrs"
+  icon          String?  // Doc icon emoji e.g. "📜"
+  seal          String?  // Seal emoji e.g. "🇩🇪"
+  acc           String?  // Accepting authority e.g. "German Embassy"
+  cat           String   @default("General") // Category for filtering
+  imageUrl      String?  // Uploaded display image / icon URL
+  sampleFileUrl String?  // Uploaded downloadable sample certificate file URL (PDF / doc)
+  price         String?  // Starting price e.g. "₹850"
+  service       String?  // Service name e.g. "Certified Translation"
+  serviceKey    String?  // Service key e.g. "certified"
+  city          String?  // City name e.g. "New Delhi"
+  cityKey       String?  // City key e.g. "new-delhi"
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 model Industry {
