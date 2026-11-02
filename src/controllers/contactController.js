@@ -206,21 +206,45 @@ exports.submitContactInquiry = async (req, res) => {
     const referenceId = `LG-CNT-${year}-${randomSuffix}`;
     const newId = crypto.randomUUID();
 
-    if (prisma.contactInquiry && typeof prisma.contactInquiry.create === 'function') {
-      await prisma.contactInquiry.create({
-        data: {
-          id: newId,
-          referenceId,
-          name: cleanName,
-          email: cleanEmail,
-          phone: cleanPhone,
-          city: cleanCity,
-          service: cleanService,
-          message: cleanMessage,
-          status: 'new'
-        }
-      });
-    } else {
+    // Auto-create table if not exists, then insert defensively
+    try {
+      if (prisma.contactInquiry && typeof prisma.contactInquiry.create === 'function') {
+        await prisma.contactInquiry.create({
+          data: {
+            id: newId,
+            referenceId,
+            name: cleanName,
+            email: cleanEmail,
+            phone: cleanPhone,
+            city: cleanCity,
+            service: cleanService,
+            message: cleanMessage,
+            status: 'new'
+          }
+        });
+      } else {
+        await prisma.$executeRaw`
+          INSERT INTO "ContactInquiry" ("id", "referenceId", "name", "email", "phone", "city", "service", "message", "status", "createdAt", "updatedAt")
+          VALUES (${newId}, ${referenceId}, ${cleanName}, ${cleanEmail}, ${cleanPhone}, ${cleanCity}, ${cleanService}, ${cleanMessage}, 'new', NOW(), NOW())
+        `;
+      }
+    } catch (insertErr) {
+      console.warn('[CONTACT INQUIRY] Direct insert failed, ensuring table exists and retrying:', insertErr.message);
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS "ContactInquiry" (
+          "id" TEXT PRIMARY KEY,
+          "referenceId" TEXT UNIQUE NOT NULL,
+          "name" TEXT NOT NULL,
+          "email" TEXT,
+          "phone" TEXT NOT NULL,
+          "city" TEXT,
+          "service" TEXT,
+          "message" TEXT,
+          "status" TEXT NOT NULL DEFAULT 'new',
+          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
       await prisma.$executeRaw`
         INSERT INTO "ContactInquiry" ("id", "referenceId", "name", "email", "phone", "city", "service", "message", "status", "createdAt", "updatedAt")
         VALUES (${newId}, ${referenceId}, ${cleanName}, ${cleanEmail}, ${cleanPhone}, ${cleanCity}, ${cleanService}, ${cleanMessage}, 'new', NOW(), NOW())
