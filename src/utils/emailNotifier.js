@@ -414,6 +414,22 @@ async function sendAdminLeadNotification({
     if (match && match[1]) displayTotal = match[1].trim();
   }
 
+
+  const formatFilesHtml = (filesStr) => {
+    if (!filesStr) return '';
+    return filesStr.split(';;;').map(f => {
+      const trimmed = f.trim();
+      if (!trimmed) return '';
+      if (trimmed.includes(':::')) {
+        const [fName, fUrl] = trimmed.split(':::');
+        const cleanPath = (fUrl || '').replace(/^\/?uploads\//, '');
+        const downloadUrl = (fUrl && fUrl.startsWith('http')) ? fUrl : `https://languageguru.sarstage.online/api/v1/download/${encodeURIComponent(cleanPath)}`;
+        return `<a href="${downloadUrl}" target="_blank" style="color: #1d4ed8; text-decoration: underline; font-weight: 700;">📄 ${fName || 'Download File'}</a>`;
+      }
+      return `📄 ${trimmed}`;
+    }).filter(Boolean).join('<br/>');
+  };
+
   // Extract uploadedFiles if in notes
   let displayFiles = uploadedFiles;
   if (!displayFiles && notes && typeof notes === 'string') {
@@ -517,7 +533,7 @@ async function sendAdminLeadNotification({
                 ${displayFiles ? `
                 <tr style="border-bottom: 1px solid #f1f5f9;">
                   <td style="padding: 10px 0; color: #64748b; font-weight: 600;">Uploaded Files:</td>
-                  <td style="padding: 10px 0; font-weight: 600; color: #1e40af;">📎 ${displayFiles}</td>
+                  <td style="padding: 10px 0; font-weight: 600; color: #1e40af;">${formatFilesHtml(displayFiles)}</td>
                 </tr>` : ''}
                 <tr>
                   <td style="padding: 10px 0; color: #94a3b8; font-size: 12px;">Submitted At:</td>

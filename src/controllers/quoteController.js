@@ -78,7 +78,15 @@ const submitQuote = async (req, res) => {
       if (match && match[1]) effectiveTotal = match[1].trim();
     }
 
-    let effectiveFiles = uploadedFiles;
+    // Extract uploaded physical files from multer (if multipart form upload was used)
+    let uploadedFileEntries = [];
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      uploadedFileEntries = req.files.map(f => `${f.originalname}:::/uploads/${f.filename}`);
+    } else if (req.file) {
+      uploadedFileEntries = [`${req.file.originalname}:::/uploads/${req.file.filename}`];
+    }
+
+    let effectiveFiles = uploadedFileEntries.length > 0 ? uploadedFileEntries.join(';;;') : uploadedFiles;
     if (!effectiveFiles && notes && typeof notes === 'string') {
       const match = notes.match(/Files:\s*([^|\n]+)/i);
       if (match && match[1]) effectiveFiles = match[1].trim();
