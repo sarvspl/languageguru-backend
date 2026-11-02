@@ -170,6 +170,23 @@ const getAdminProfile = async (req, res) => {
 
 // ─── SMTP Configuration & Testing ───────────────────────────────────────────
 
+function parseSenderDisplay(fromStr, fallbackEmail) {
+  if (!fromStr || !String(fromStr).trim()) {
+    return `"Language Guru India" <${fallbackEmail}>`;
+  }
+  const str = String(fromStr).trim();
+  if (!str.includes('<') && str.includes('@')) {
+    return `"Language Guru India" <${str.replace(/["']/g, '').trim()}>`;
+  }
+  const match = str.match(/^(.*?)\s*<([^>]+)>/);
+  if (match) {
+    const rawName = match[1].replace(/["']/g, '').trim();
+    const cleanEmail = match[2].trim();
+    return `"${rawName || 'Language Guru India'}" <${cleanEmail}>`;
+  }
+  return str;
+}
+
 // GET /api/v1/settings/smtp
 const getSmtpSettings = async (req, res) => {
   try {
@@ -212,8 +229,8 @@ const updateSmtpSettings = async (req, res) => {
     const cleanSecure = isSecure ? 'true' : 'false';
     const cleanUser = String(user).trim();
     const cleanPass = String(pass).trim();
-    const rawFrom = from && String(from).trim() ? String(from).trim().replace(/^"|"$/g, '').replace(/"/g, '') : `Language Guru India <${cleanUser}>`;
-    const cleanFrom = `"${rawFrom}"`;
+    const cleanFrom = parseSenderDisplay(from, cleanUser);
+    const rawFrom = cleanFrom.replace(/^"|"$/g, '');
     const cleanAdminEmail = adminNotificationEmail && String(adminNotificationEmail).trim() ? String(adminNotificationEmail).trim() : cleanUser;
 
     const updates = {
@@ -300,7 +317,7 @@ const testSmtpSettings = async (req, res) => {
     await transporter.verify();
 
     // Step 2: Send test email
-    const senderDisplay = from ? (String(from).startsWith('"') ? from : `"${from}"`) : `"Language Guru India" <${testUser}>`;
+    const senderDisplay = parseSenderDisplay(from, testUser);
     const now = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
 
     await transporter.sendMail({

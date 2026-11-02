@@ -40,8 +40,18 @@ function isValidEmail(email) {
 }
 
 function getSenderAddress() {
-  const user = process.env.SMTP_USER || 'info@languageguruindia.com';
-  return process.env.SMTP_FROM || `"Language Guru India" <${user}>`;
+  const user = process.env.SMTP_USER || 'info@languageguru.co.in';
+  const rawFrom = process.env.SMTP_FROM || `"Language Guru India" <${user}>`;
+  const match = String(rawFrom).match(/^(.*?)\s*<([^>]+)>/);
+  if (match) {
+    const rawName = match[1].replace(/["']/g, '').trim();
+    const cleanEmail = match[2].trim();
+    return `"${rawName || 'Language Guru India'}" <${cleanEmail}>`;
+  }
+  if (!String(rawFrom).includes('<') && String(rawFrom).includes('@')) {
+    return `"Language Guru India" <${String(rawFrom).replace(/["']/g, '').trim()}>`;
+  }
+  return rawFrom;
 }
 
 function getAdminEmail() {
