@@ -1,3 +1,20 @@
+// Defensive helper: ensures new certificate columns exist in DB
+async function ensureGalleryColumns() {
+  try {
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
+      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "sampleFileUrl" TEXT;
+      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "price" TEXT;
+      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "service" TEXT;
+      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "serviceKey" TEXT;
+      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "city" TEXT;
+      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "cityKey" TEXT;
+    `);
+  } catch (e) {
+    console.warn('ensureGalleryColumns warning:', e.message);
+  }
+}
+
 const prisma = require('../config/db');
 const { randomUUID } = require('crypto');
 
@@ -52,19 +69,37 @@ const createGalleryItem = async (req, res) => {
     const activeVal = isActive !== false;
     const now = new Date();
 
-    await prisma.$executeRaw`
-      INSERT INTO "GalleryItem" (
-        "id", "doc", "lang", "flag", "langKey", "time", "icon", "seal", "acc", "cat",
-        "imageUrl", "sampleFileUrl", "price", "service", "serviceKey", "city", "cityKey",
-        "isActive", "createdAt", "updatedAt"
-      ) VALUES (
-        ${id}, ${doc.trim()}, ${lang.trim()}, ${finalFlag}, ${finalLangKey}, ${finalTime},
-        ${finalIcon}, ${finalSeal}, ${acc || null}, ${finalCat},
-        ${imageUrl || null}, ${sampleFileUrl || null}, ${price || null},
-        ${service || null}, ${serviceKey || null}, ${city || null}, ${cityKey || null},
-        ${activeVal}, ${now}, ${now}
-      )
-    `;
+    try {
+      await prisma.$executeRaw`
+        INSERT INTO "GalleryItem" (
+          "id", "doc", "lang", "flag", "langKey", "time", "icon", "seal", "acc", "cat",
+          "imageUrl", "sampleFileUrl", "price", "service", "serviceKey", "city", "cityKey",
+          "isActive", "createdAt", "updatedAt"
+        ) VALUES (
+          ${id}, ${doc.trim()}, ${lang.trim()}, ${finalFlag}, ${finalLangKey}, ${finalTime},
+          ${finalIcon}, ${finalSeal}, ${acc || null}, ${finalCat},
+          ${imageUrl || null}, ${sampleFileUrl || null}, ${price || null},
+          ${service || null}, ${serviceKey || null}, ${city || null}, ${cityKey || null},
+          ${activeVal}, ${now}, ${now}
+        )
+      `;
+    } catch (dbErr) {
+      console.warn('[GALLERY] Insert failed, ensuring columns exist and retrying:', dbErr.message);
+      await ensureGalleryColumns();
+      await prisma.$executeRaw`
+        INSERT INTO "GalleryItem" (
+          "id", "doc", "lang", "flag", "langKey", "time", "icon", "seal", "acc", "cat",
+          "imageUrl", "sampleFileUrl", "price", "service", "serviceKey", "city", "cityKey",
+          "isActive", "createdAt", "updatedAt"
+        ) VALUES (
+          ${id}, ${doc.trim()}, ${lang.trim()}, ${finalFlag}, ${finalLangKey}, ${finalTime},
+          ${finalIcon}, ${finalSeal}, ${acc || null}, ${finalCat},
+          ${imageUrl || null}, ${sampleFileUrl || null}, ${price || null},
+          ${service || null}, ${serviceKey || null}, ${city || null}, ${cityKey || null},
+          ${activeVal}, ${now}, ${now}
+        )
+      `;
+    }
 
     const [created] = await prisma.$queryRaw`SELECT * FROM "GalleryItem" WHERE "id" = ${id}`;
     res.status(201).json({ success: true, data: created });
