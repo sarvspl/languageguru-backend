@@ -212,7 +212,7 @@ const updateSmtpSettings = async (req, res) => {
     const cleanSecure = isSecure ? 'true' : 'false';
     const cleanUser = String(user).trim();
     const cleanPass = String(pass).trim();
-    const rawFrom = from && String(from).trim() ? String(from).trim().replace(/^"|"$/g, '') : `Language Guru India <${cleanUser}>`;
+    const rawFrom = from && String(from).trim() ? String(from).trim().replace(/^"|"$/g, '').replace(/"/g, '') : `Language Guru India <${cleanUser}>`;
     const cleanFrom = `"${rawFrom}"`;
     const cleanAdminEmail = adminNotificationEmail && String(adminNotificationEmail).trim() ? String(adminNotificationEmail).trim() : cleanUser;
 
@@ -290,7 +290,10 @@ const testSmtpSettings = async (req, res) => {
       },
       tls: {
         rejectUnauthorized: false
-      }
+      },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000
     });
 
     // Step 1: Verify SMTP credentials
@@ -355,7 +358,9 @@ const testSmtpSettings = async (req, res) => {
     if (errMsg.includes('535') || errMsg.includes('BadCredentials') || errMsg.includes('Username and Password not accepted')) {
       errMsg = 'Authentication failed: Google/SMTP rejected your username or app password. Please ensure 2-Step Verification is enabled and you generated a 16-character App Password (not your personal Google account password).';
     } else if (errMsg.includes('ETIMEDOUT') || errMsg.includes('ECONNREFUSED')) {
-      errMsg = `Connection timeout: Could not connect to ${req.body.host || 'SMTP host'} on port ${req.body.port || 465}. Please check your host and port.`;
+      const pUsed = req.body.port || 465;
+      const altP = (pUsed == 465) ? '587 (TLS)' : '465 (SSL)';
+      errMsg = `Connection timeout: Could not connect to ${req.body.host || 'SMTP host'} on port ${pUsed}. Your server firewall may be blocking outbound port ${pUsed}. Try switching to Port ${altP}.`;
     }
     return res.status(400).json({
       success: false,
