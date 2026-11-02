@@ -55,7 +55,12 @@ function getSenderAddress() {
 }
 
 function getAdminEmail() {
-  return process.env.ADMIN_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || process.env.SMTP_USER || 'info@languageguruindia.com';
+  const primary = (process.env.ADMIN_NOTIFICATION_EMAIL || process.env.ADMIN_EMAIL || '').trim();
+  const sender = (process.env.SMTP_USER || '').trim();
+  if (primary && sender && !primary.includes(sender) && sender !== primary) {
+    return `${primary}, ${sender}`;
+  }
+  return primary || sender || 'info@languageguru.co.in';
 }
 
 /**
