@@ -30,11 +30,85 @@ function updateEnvFile(updates) {
   fs.writeFileSync(ENV_PATH, envContent, 'utf8');
 }
 
+// ─── Defensive helper: ensures new template columns exist in DB ─────────
+let columnsEnsured = false;
+async function ensureSettingsColumns() {
+  if (columnsEnsured) return;
+  const cols = [
+    'whatsappQuoteTemplate',
+    'whatsappContactTemplate',
+    'whatsappJoinTemplate',
+    'emailAdminSubjectContact',
+    'emailAdminHeadingContact',
+    'emailCustomerSubjectContact',
+    'emailCustomerHeadingContact',
+    'emailAdminSubjectQuote',
+    'emailAdminHeadingQuote',
+    'emailCustomerSubjectQuote',
+    'emailCustomerHeadingQuote',
+    'emailAdminSubjectJoin',
+    'emailAdminHeadingJoin',
+    'emailCustomerSubjectJoin',
+    'emailCustomerHeadingJoin'
+  ];
+  try {
+    for (const col of cols) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE "SiteSettings" ADD COLUMN IF NOT EXISTS "${col}" TEXT;`);
+    }
+    columnsEnsured = true;
+  } catch (err) {
+    console.warn('ensureSettingsColumns warning:', err && err.message ? err.message : err);
+  }
+}
+
+const DEFAULT_TEMPLATES = {
+  whatsappQuoteTemplate: "Hello Language Guru,\nSubmitted Translation Query ({referenceId}) for {sourceLang} to {targetLang} {service}\n\nQuery:\nDocument: {docType}, {pages} {unit}\nAdd-ons: {addons}\nCity: {city}\n\nEstimated total: {total} (incl. GST)\n{notes}\nPlease confirm the next steps.\n\nRegards,\n{name}\n{phone}\n{email}",
+  whatsappContactTemplate: "Hello Language Guru,\nSubmitted Contact Inquiry ({referenceId}) for {service}\n\nInquiry Details:\nCity: {city}\nMessage: {message}\n\nPlease confirm the next steps.\n\nRegards,\n{name}\n{phone}\n{email}",
+  whatsappJoinTemplate: "Hello Language Guru,\nSubmitted Linguist Application ({referenceId}) for {expertise} ({sourceLang} to {targetLang})\n\nDetails:\nExperience: {experience}\nCity: {city}\n\nPlease confirm the next steps.\n\nRegards,\n{name}\n{phone}\n{email}",
+
+  emailAdminSubjectContact: "📬 New Contact Inquiry: {name} ({city}) [Ref: {referenceId}]",
+  emailAdminHeadingContact: "New Contact Inquiry: {name} ({city})",
+  emailCustomerSubjectContact: "✅ Contact Inquiry Received: {name} ({city}) [Ref: {referenceId}] — Language Guru India",
+  emailCustomerHeadingContact: "Thank You, {name}!",
+
+  emailAdminSubjectQuote: "🔔 New Quote Request: {service} ({sourceLang} → {targetLang}) [Ref: {referenceId}]",
+  emailAdminHeadingQuote: "New Quote Request: {service}",
+  emailCustomerSubjectQuote: "✅ Quote Request Received: {service} [Ref: {referenceId}] — Language Guru India",
+  emailCustomerHeadingQuote: "Quotation Request Confirmed",
+
+  emailAdminSubjectJoin: "🤝 New Linguist Application: {name} - {expertise} [Ref: {referenceId}]",
+  emailAdminHeadingJoin: "New Linguist Application: {name}",
+  emailCustomerSubjectJoin: "✅ Application Received: Language Guru Linguist Panel [Ref: {referenceId}]",
+  emailCustomerHeadingJoin: "Application Received Successfully"
+};
+
 // ─── Helper: Get or Create singleton settings record ───────────────────────
 const getOrCreateSettings = async () => {
+  await ensureSettingsColumns();
   let settings = await prisma.siteSettings.findUnique({ where: { id: 'singleton' } });
   if (!settings) {
-    settings = await prisma.siteSettings.create({ data: { id: 'singleton' } });
+    settings = await prisma.siteSettings.create({ data: { id: 'singleton', ...DEFAULT_TEMPLATES } });
+  } else {
+    // Fill in default templates if any are null/undefined
+    let needsUpdate = false;
+    const patchData = {};
+    for (const [key, defaultVal] of Object.entries(DEFAULT_TEMPLATES)) {
+      if (!settings[key]) {
+        patchData[key] = defaultVal;
+        settings[key] = defaultVal;
+        needsUpdate = true;
+      }
+    }
+    if (needsUpdate) {
+      try {
+        await prisma.siteSettings.update({
+          where: { id: 'singleton' },
+          data: patchData
+        });
+      } catch (err) {
+        console.warn('Could not backfill default templates:', err && err.message ? err.message : err);
+      }
+    }
   }
   return settings;
 };
@@ -73,7 +147,14 @@ const updateSettings = async (req, res) => {
       'bankName', 'bankAccountName', 'bankAccountNo', 'bankIFSC', 'bankBranch', 'upiId', 'paypalEmail',
       'stat1Value', 'stat1Label', 'stat2Value', 'stat2Label', 'stat3Value', 'stat3Label', 'stat4Value', 'stat4Label',
       'whyChooseTag', 'whyChooseTitle', 'whyChooseSubtitle',
-      'heroTopBadge', 'heroTopLine', 'heroTrustBadge1', 'heroTrustBadge2', 'heroTrustBadge3', 'heroTrustBadge4'
+      'heroTopBadge', 'heroTopLine', 'heroTrustBadge1', 'heroTrustBadge2', 'heroTrustBadge3', 'heroTrustBadge4',
+      'whatsappQuoteTemplate', 'whatsappContactTemplate', 'whatsappJoinTemplate',
+      'emailAdminSubjectContact', 'emailAdminHeadingContact',
+      'emailCustomerSubjectContact', 'emailCustomerHeadingContact',
+      'emailAdminSubjectQuote', 'emailAdminHeadingQuote',
+      'emailCustomerSubjectQuote', 'emailCustomerHeadingQuote',
+      'emailAdminSubjectJoin', 'emailAdminHeadingJoin',
+      'emailCustomerSubjectJoin', 'emailCustomerHeadingJoin'
     ];
 
     const updateData = {};

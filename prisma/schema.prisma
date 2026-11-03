@@ -230,6 +230,27 @@ model SiteSettings {
   whyChooseTag      String   @default("Why Choose Us")
   whyChooseTitle    String   @default("Why Choose Language Guru for <em>Certified Translation</em>")
   whyChooseSubtitle String   @default("ISO-9001:2015 and ISO 17100:2015 certified · MSME registered · MEA-empanelled · 10,000+ clients · Embassy-accepted translations guaranteed.")
+  // WhatsApp Message Templates
+  whatsappQuoteTemplate        String?  @default("Hello Language Guru,\nSubmitted Translation Query ({referenceId}) for {sourceLang} to {targetLang} {service}\n\nQuery:\nDocument: {docType}, {pages} {unit}\nAdd-ons: {addons}\nCity: {city}\n\nEstimated total: {total} (incl. GST)\n{notes}\nPlease confirm the next steps.\n\nRegards,\n{name}\n{phone}\n{email}")
+  whatsappContactTemplate      String?  @default("Hello Language Guru,\nSubmitted Contact Inquiry ({referenceId}) for {service}\n\nInquiry Details:\nCity: {city}\nMessage: {message}\n\nPlease confirm the next steps.\n\nRegards,\n{name}\n{phone}\n{email}")
+  whatsappJoinTemplate         String?  @default("Hello Language Guru,\nSubmitted Linguist Application ({referenceId}) for {expertise} ({sourceLang} to {targetLang})\n\nDetails:\nExperience: {experience}\nCity: {city}\n\nPlease confirm the next steps.\n\nRegards,\n{name}\n{phone}\n{email}")
+
+  // Email Templates & Headings (Admin Notifications & Customer Confirmations)
+  emailAdminSubjectContact     String?  @default("📬 New Contact Inquiry: {name} ({city}) [Ref: {referenceId}]")
+  emailAdminHeadingContact     String?  @default("New Contact Inquiry: {name} ({city})")
+  emailCustomerSubjectContact  String?  @default("✅ Contact Inquiry Received: {name} ({city}) [Ref: {referenceId}] — Language Guru India")
+  emailCustomerHeadingContact  String?  @default("Thank You, {name}!")
+
+  emailAdminSubjectQuote       String?  @default("🔔 New Quote Request: {service} ({sourceLang} → {targetLang}) [Ref: {referenceId}]")
+  emailAdminHeadingQuote       String?  @default("New Quote Request: {service}")
+  emailCustomerSubjectQuote    String?  @default("✅ Quote Request Received: {service} [Ref: {referenceId}] — Language Guru India")
+  emailCustomerHeadingQuote    String?  @default("Quotation Request Confirmed")
+
+  emailAdminSubjectJoin        String?  @default("🤝 New Linguist Application: {name} - {expertise} [Ref: {referenceId}]")
+  emailAdminHeadingJoin        String?  @default("New Linguist Application: {name}")
+  emailCustomerSubjectJoin     String?  @default("✅ Application Received: Language Guru Linguist Panel [Ref: {referenceId}]")
+  emailCustomerHeadingJoin     String?  @default("Application Received Successfully")
+
   // System
   maintenanceMode   Boolean  @default(false)
   updatedAt         DateTime @updatedAt

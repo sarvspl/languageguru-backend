@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const prisma = require('../config/db');
 
 /**
  * Creates and returns the Nodemailer transporter based on environment configuration.
@@ -67,6 +68,37 @@ function getAdminEmail() {
  * Helper to format name and city consistently: e.g. "Arnab (Mumbai)"
  * If city is not provided, defaults cleanly to just the name.
  */
+
+let _cachedSiteSettings = null;
+let _cachedSettingsTime = 0;
+async function getEmailSettings() {
+  const now = Date.now();
+  if (_cachedSiteSettings && now - _cachedSettingsTime < 20000) {
+    return _cachedSiteSettings;
+  }
+  try {
+    const s = await prisma.siteSettings.findUnique({ where: { id: 'singleton' } });
+    if (s) {
+      _cachedSiteSettings = s;
+      _cachedSettingsTime = now;
+      return s;
+    }
+  } catch (err) {
+    // Return cached or empty
+  }
+  return _cachedSiteSettings || {};
+}
+
+function interpolateEmailText(template, vars, fallback) {
+  if (!template || !String(template).trim()) return fallback;
+  let text = String(template);
+  for (const [k, v] of Object.entries(vars)) {
+    const reg = new RegExp(`\\{${k}\\}`, 'g');
+    text = text.replace(reg, v !== undefined && v !== null ? String(v) : '');
+  }
+  return text.trim();
+}
+
 function formatNameCity(name, city) {
   const cleanName = (name || 'Valued Client').trim();
   const cleanCity = (city || '').trim();
@@ -93,6 +125,17 @@ async function sendAdminContactInquiryNotification({
   const adminEmail = getAdminEmail();
   const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
   const nameWithCity = formatNameCity(name, city);
+  const emailSettings = await getEmailSettings();
+  const emailSubject = interpolateEmailText(
+    emailSettings.emailAdminSubjectContact,
+    { name, city: city || 'Not specified', referenceId, service: service || 'General Inquiry' },
+    `📬 New Contact Inquiry: ${nameWithCity} [Ref: ${referenceId}]`
+  );
+  const emailHeading = interpolateEmailText(
+    emailSettings.emailAdminHeadingContact,
+    { name, city: city || 'Not specified', referenceId, service: service || 'General Inquiry' },
+    `New Contact Inquiry: ${nameWithCity}`
+  );
 
   console.log(`[CONTACT INQUIRY ADMIN NOTIFICATION] Processing inquiry [${referenceId}] for admin ${adminEmail} from ${nameWithCity}`);
 
@@ -111,7 +154,7 @@ async function sendAdminContactInquiryNotification({
     const mailOptions = {
       from: getSenderAddress(),
       to: adminEmail,
-      subject: `📬 New Contact Inquiry: ${nameWithCity} [Ref: ${referenceId}]`,
+      subject: emailSubject,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
           <!-- Top Banner -->
@@ -233,7 +276,7 @@ async function sendCustomerContactInquiryConfirmation({
     const mailOptions = {
       from: getSenderAddress(),
       to: customerEmail,
-      subject: `✅ Contact Inquiry Received: ${nameWithCity} [Ref: ${referenceId}] — Language Guru India`,
+      subject: emailSubject,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
           <!-- Header Banner -->

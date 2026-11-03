@@ -1,12 +1,47 @@
 const prisma = require('../config/db');
 
-// Get active clients (public)
+// Helper to retrieve clients from ClientsPage singleton (which Admin manages)
+async function getClientsFromPageOrDb() {
+  try {
+    const clientsPage = await prisma.clientsPage.findUnique({
+      where: { id: 'singleton' }
+    });
+    if (clientsPage && clientsPage.clientsList) {
+      let list = [];
+      try {
+        list = typeof clientsPage.clientsList === 'string'
+          ? JSON.parse(clientsPage.clientsList)
+          : clientsPage.clientsList;
+      } catch (e) {
+        list = [];
+      }
+      if (Array.isArray(list) && list.length > 0) {
+        return list.map((c, idx) => ({
+          id: c.id || `client-${idx + 1}`,
+          name: c.name || '',
+          logo: c.logo || c.icon || '',
+          icon: c.icon || c.logo || '',
+          category: c.category || c.industry || 'Corporate',
+          industry: c.category || c.industry || 'Corporate',
+          isActive: c.isActive !== undefined ? c.isActive : true,
+          sortOrder: idx + 1
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn('Error reading clients from ClientsPage:', err && err.message ? err.message : err);
+  }
+
+  return await prisma.client.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: 'asc' }
+  });
+}
+
+// Get active clients (public) - prioritizes ClientsPage singleton
 exports.getClients = async (req, res) => {
   try {
-    const clients = await prisma.client.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' }
-    });
+    const clients = await getClientsFromPageOrDb();
     res.json({ success: true, data: clients });
   } catch (error) {
     console.error('Error fetching clients:', error);
@@ -17,9 +52,7 @@ exports.getClients = async (req, res) => {
 // Admin: Get all clients
 exports.getAllClients = async (req, res) => {
   try {
-    const clients = await prisma.client.findMany({
-      orderBy: { sortOrder: 'asc' }
-    });
+    const clients = await getClientsFromPageOrDb();
     res.json({ success: true, data: clients });
   } catch (error) {
     console.error('Error fetching all clients:', error);
