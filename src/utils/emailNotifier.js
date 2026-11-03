@@ -277,6 +277,8 @@ async function sendCustomerContactInquiryConfirmation({
     { name, city: city || 'Not specified', referenceId, service: service || 'General Inquiry' },
     `We have successfully received your inquiry. Our support team has assigned a dedicated coordinator to respond within 15–30 minutes.`
   );
+  const supportWa = (emailSettings?.whatsappNumber || '919147433460').replace(/[^0-9]/g, '');
+  const supportPhone = emailSettings?.phone || '+91-9147433460';
   console.log(`[CONTACT INQUIRY CUSTOMER CONFIRMATION] Preparing confirmation for ${customerEmail} (${nameWithCity}) [Ref: ${referenceId}]`);
 
   const transporter = getTransporter();
@@ -370,11 +372,11 @@ async function sendCustomerContactInquiryConfirmation({
 
             <!-- Instant WhatsApp Connection Button -->
             <div style="text-align: center; margin-top: 10px;">
-              <a href="https://wa.me/919312690490?text=Hi%20Language%20Guru%2C%20I%20have%20submitted%20a%20contact%20inquiry%20(Ref%3A%20${referenceId}).%20Please%20assist%20me." style="display: inline-block; background: #25D366; color: #ffffff; padding: 12px 26px; border-radius: 8px; font-weight: 700; font-size: 14.5px; text-decoration: none;">
+              <a href="https://wa.me/${supportWa}?text=Hi%20Language%20Guru%2C%20I%20have%20submitted%20a%20contact%20inquiry%20(Ref%3A%20${referenceId}).%20Please%20assist%20me." style="display: inline-block; background: #25D366; color: #ffffff; padding: 12px 26px; border-radius: 8px; font-weight: 700; font-size: 14.5px; text-decoration: none;">
                 💬 Chat with Support on WhatsApp
               </a>
               <div style="font-size: 12px; color: #64748b; margin-top: 8px;">
-                Direct Helpline: <a href="tel:+919312690490" style="color: #0284c7; font-weight: 700; text-decoration: none;">+91-9312690490</a> / <a href="tel:+919810693777" style="color: #0284c7; font-weight: 700; text-decoration: none;">+91-9810693777</a>
+                Direct Helpline: <a href="tel:${supportPhone.replace(/[^\d+]/g, '')}" style="color: #0284c7; font-weight: 700; text-decoration: none;">${supportPhone}</a> / <a href="tel:+919810693777" style="color: #0284c7; font-weight: 700; text-decoration: none;">+91-9810693777</a>
               </div>
             </div>
           </div>
@@ -842,11 +844,11 @@ async function sendCustomerLeadConfirmation({
 
             <!-- Instant WhatsApp Connection Button -->
             <div style="text-align: center; margin-top: 10px;">
-              <a href="https://wa.me/919312690490?text=Hi%20Language%20Guru%2C%20I%20have%20submitted%20a%20quote%20request%20with%20Ref%3A%20${referenceId}.%20Please%20assist%20me." style="display: inline-block; background: #25D366; color: #ffffff; padding: 12px 26px; border-radius: 8px; font-weight: 700; font-size: 14.5px; text-decoration: none;">
+              <a href="https://wa.me/${supportWa}?text=Hi%20Language%20Guru%2C%20I%20have%20submitted%20a%20quote%20request%20with%20Ref%3A%20${referenceId}.%20Please%20assist%20me." style="display: inline-block; background: #25D366; color: #ffffff; padding: 12px 26px; border-radius: 8px; font-weight: 700; font-size: 14.5px; text-decoration: none;">
                 💬 Chat with Translation Coordinator on WhatsApp
               </a>
               <div style="font-size: 12px; color: #64748b; margin-top: 8px;">
-                Direct Call: <a href="tel:+919312690490" style="color: #0284c7; font-weight: 700; text-decoration: none;">+91-9312690490</a> / <a href="tel:+919810693777" style="color: #0284c7; font-weight: 700; text-decoration: none;">+91-9810693777</a>
+                Direct Call: <a href="tel:${supportPhone.replace(/[^\d+]/g, '')}" style="color: #0284c7; font-weight: 700; text-decoration: none;">${supportPhone}</a> / <a href="tel:+919810693777" style="color: #0284c7; font-weight: 700; text-decoration: none;">+91-9810693777</a>
               </div>
             </div>
           </div>

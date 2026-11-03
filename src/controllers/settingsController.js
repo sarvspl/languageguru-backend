@@ -160,11 +160,12 @@ const updateSettings = async (req, res) => {
       'emailAdminSubjectQuote', 'emailAdminHeadingQuote',
       'emailCustomerSubjectQuote', 'emailCustomerHeadingQuote',
       'emailAdminSubjectJoin', 'emailAdminHeadingJoin',
-      'emailCustomerSubjectJoin', 'emailCustomerHeadingJoin'
+      'emailCustomerSubjectJoin', 'emailCustomerHeadingJoin',
+      'emailCustomerBodyContact', 'emailCustomerBodyQuote', 'emailCustomerBodyJoin'
     ];
 
     const updateData = {};
-    if (req.body.phone && (!req.body.whatsappNumber || req.body.whatsappNumber === '+919312690490')) {
+    if (req.body.phone && (!req.body.whatsappNumber || req.body.whatsappNumber === '+919147433460')) {
       updateData.whatsappNumber = req.body.phone;
     }
     for (const field of allowedFields) {

@@ -14,7 +14,7 @@ const DEFAULT_CONTACT = {
   heroWaBtnText: '💬 WhatsApp',
   card1Icon: '📞',
   card1Title: 'Call / WhatsApp',
-  card1Phone: '+91-9312690490',
+  card1Phone: '+91-9147433460',
   card1Timing: 'Mon–Sat: 9 AM – 7 PM • Sun: 10 AM – 4 PM',
   card1BtnText: '💬 WhatsApp Now',
   card2Icon: '✉️',
@@ -35,7 +35,7 @@ const DEFAULT_CONTACT = {
   hoursMonFri: '9:00 AM — 7:00 PM',
   hoursSat: '10:00 AM — 6:00 PM',
   hoursSun: '10:00 AM — 4:00 PM',
-  urgentText: '🆘 Urgent: WhatsApp 24/7 at +91-9312690490',
+  urgentText: '🆘 Urgent: WhatsApp 24/7 at +91-9147433460',
   certsTitle: '🏆 Certifications',
   certsList: JSON.stringify([
     '🏅 ISO 9001:2015',

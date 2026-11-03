@@ -185,7 +185,7 @@ model SiteSettings {
   companyName       String   @default("Language Guru")
   logoUrl           String   @default("/logo.jpg")
   tagline           String   @default("India's #1 Certified Translation Agency")
-  phone             String   @default("+91-9312690490")
+  phone             String   @default("+91-9147433460")
   email             String   @default("info@languageguruindia.com")
   address           String   @default("617, West End Mall, Janakpuri, New Delhi – 110058")
   website           String   @default("https://www.languageguruindia.com")
@@ -214,7 +214,7 @@ model SiteSettings {
   // UI / Branding
   heroHeading       String   @default("Certified Translation Services in Delhi")
   heroSubtitle      String   @default("ISO 9001:2015 Certified · 25+ Years Experience · 100+ Languages")
-  whatsappNumber    String   @default("+919312690490")
+  whatsappNumber    String   @default("+919147433460")
   heroBgImage       String? // Add hero background image
   heroTopBadge      String   @default("⭐ ISO-9001:2015 and ISO 17100:2015 Certified Translation Agency")
   heroTopLine       String   @default("INDIA'S #1 CERTIFIED TRANSLATION AGENCY")
@@ -398,7 +398,7 @@ model ContactPage {
   // Top 3 Contact Cards
   card1Icon       String @default("📞")
   card1Title      String @default("Call / WhatsApp")
-  card1Phone      String @default("+91-9312690490")
+  card1Phone      String @default("+91-9147433460")
   card1Timing     String @default("Mon–Sat: 9 AM – 7 PM • Sun: 10 AM – 4 PM")
   card1BtnText    String @default("💬 WhatsApp Now")
 
@@ -425,7 +425,7 @@ model ContactPage {
   hoursMonFri String @default("9:00 AM — 7:00 PM")
   hoursSat    String @default("10:00 AM — 6:00 PM")
   hoursSun    String @default("10:00 AM — 4:00 PM")
-  urgentText  String @default("🆘 Urgent: WhatsApp 24/7 at +91-9312690490")
+  urgentText  String @default("🆘 Urgent: WhatsApp 24/7 at +91-9147433460")
 
   // Accreditations Sidebar
   certsTitle String @default("🏆 Certifications")

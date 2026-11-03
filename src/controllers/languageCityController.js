@@ -102,7 +102,7 @@ function buildDefaultLanguageCityOverride(language, city) {
   const standardInterpParagraphs = [
     "Language Guru – Language Guru provides certified " + LN + " interpretation services across India. Our professional " + LN + " interpreters are qualified, native-speaking language specialists with domain expertise in legal, medical, corporate and conference settings. We offer both on-site and remote interpretation in " + LN + "↔English and " + LN + "↔Hindi language pairs, covered under our ISO-9001:2015 and ISO 17100:2015 quality framework with strict NDA protection.",
     "Our " + LN + " interpreters serve clients in " + CN + " for court hearings, business negotiations, medical consultations, embassy appointments, trade fairs and international conferences. With 20+ years of experience, Language Guru is the preferred " + LN + " interpretation partner for government bodies, law firms, hospitals, embassies and Fortune 500 companies across India.",
-    "Whether you need a consecutive interpreter for a one-on-one meeting, a simultaneous interpreter for a large conference, or a telephone interpreter for a remote consultation in " + CN + " — Language Guru has certified " + LN + " interpreters available for same-day bookings. Call or WhatsApp +91-9312690490 for instant booking."
+    "Whether you need a consecutive interpreter for a one-on-one meeting, a simultaneous interpreter for a large conference, or a telephone interpreter for a remote consultation in " + CN + " — Language Guru has certified " + LN + " interpreters available for same-day bookings. Call or WhatsApp +91-9147433460 for instant booking."
   ];
 
   const isObsoleteArr = (arr) => {
@@ -239,9 +239,9 @@ function buildDefaultLanguageCityOverride(language, city) {
     heroBtn1Text: "📋 Get Free Quote",
     heroBtn1Link: "/quote",
     heroBtn2Text: "📞 Call Now",
-    heroBtn2Phone: "+91-9312690490",
+    heroBtn2Phone: "+91-9147433460",
     heroBtn3Text: "💬 WhatsApp",
-    heroBtn3WA: "919312690490",
+    heroBtn3WA: "919147433460",
     heroBadgesList: "✅ Embassy Accepted | ⚡ 24-Hr Express | 🔏 Notarized & Apostilled | 🏆 Internationally Certified | ⭐ 4.8/5 - 10,000+ Reviews",
     title: LN + " Translation Services in " + CN,
     p1: defaultIntroParagraphs[0],
@@ -275,12 +275,12 @@ function buildDefaultLanguageCityOverride(language, city) {
     faqsTitle: "FAQs – " + LN + " Translation in " + CN,
     ctaTitle: "Need " + LN + " Translation in " + CN + "?",
     ctaSubtitle: "Instant quote in 30 minutes. 24-hour express delivery across " + CN + ". Email & WhatsApp submission.",
-    sidebarPhone1: "+919312690490",
+    sidebarPhone1: "+919147433460",
     sidebarPhone2: "+919810693777",
     sidebarBtn1Text: "📋 Get Free Quote",
     sidebarBtn1Link: "/quote",
     sidebarBtn2Text: "💬 WhatsApp Us",
-    sidebarBtn2WA: "919312690490",
+    sidebarBtn2WA: "919147433460",
     sidebarCtaTitle: "Get " + LN + " Translation in " + CN,
     sidebarCitiesTitle: "🏙️ " + LN + " Translation – By City",
     sidebarLangsTitle: "Other Languages – " + CN,
