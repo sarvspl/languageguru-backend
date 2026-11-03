@@ -29,6 +29,7 @@ async function ensureGalleryColumns() {
 // Get all gallery items (public - active only)
 const getGallery = async (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     await ensureGalleryColumns();
     const { placement } = req.query;
     let items;
@@ -79,6 +80,7 @@ const getGallery = async (req, res) => {
 // Get ALL gallery items (admin — includes inactive)
 const getAllGallery = async (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     await ensureGalleryColumns();
     const items = await prisma.$queryRaw`
       SELECT * FROM "GalleryItem"

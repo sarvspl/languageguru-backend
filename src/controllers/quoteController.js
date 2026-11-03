@@ -136,33 +136,13 @@ const submitQuote = async (req, res) => {
       }
     });
 
-    // Trigger admin email notification (fail-safe asynchronous execution)
-    sendAdminLeadNotification({
-      referenceId,
-      name: quote.name,
-      phone: quote.phone,
-      email: quote.email,
-      serviceKey: quote.serviceKey,
-      sourceLang: quote.sourceLang,
-      targetLang: quote.targetLang,
-      pages: quote.pages,
-      isInterpreter: quote.isInterpreter,
-      city: effectiveCity,
-      docType: effectiveDocType,
-      addons: effectiveAddons,
-      estimatedTotal: effectiveTotal,
-      uploadedFiles: effectiveFiles,
-      userNotes: cleanUserNotes,
-      notes: quote.notes,
-      message: cleanUserNotes
-    }).catch(err => console.error('Admin notification error:', err));
-
-    // Trigger customer confirmation email (fail-safe asynchronous execution)
-    if (isValidEmail(quote.email)) {
-      sendCustomerLeadConfirmation({
-        toEmail: String(quote.email).trim(),
-        name: quote.name,
+    // Sequential email notifications to avoid Hostinger SMTP socket collision
+    try {
+      await sendAdminLeadNotification({
         referenceId,
+        name: quote.name,
+        phone: quote.phone,
+        email: quote.email,
         serviceKey: quote.serviceKey,
         sourceLang: quote.sourceLang,
         targetLang: quote.targetLang,
@@ -174,8 +154,35 @@ const submitQuote = async (req, res) => {
         estimatedTotal: effectiveTotal,
         uploadedFiles: effectiveFiles,
         userNotes: cleanUserNotes,
-        notes: quote.notes
-      }).catch(err => console.error('Customer confirmation error:', err));
+        notes: quote.notes,
+        message: cleanUserNotes
+      });
+    } catch (adminErr) {
+      console.error('[QUOTE LEAD] Admin notification error:', adminErr && adminErr.message ? adminErr.message : adminErr);
+    }
+
+    if (isValidEmail(quote.email)) {
+      try {
+        await sendCustomerLeadConfirmation({
+          toEmail: String(quote.email).trim(),
+          name: quote.name,
+          referenceId,
+          serviceKey: quote.serviceKey,
+          sourceLang: quote.sourceLang,
+          targetLang: quote.targetLang,
+          pages: quote.pages,
+          isInterpreter: quote.isInterpreter,
+          city: effectiveCity,
+          docType: effectiveDocType,
+          addons: effectiveAddons,
+          estimatedTotal: effectiveTotal,
+          uploadedFiles: effectiveFiles,
+          userNotes: cleanUserNotes,
+          notes: quote.notes
+        });
+      } catch (custErr) {
+        console.error('[QUOTE LEAD] Customer confirmation error:', custErr && custErr.message ? custErr.message : custErr);
+      }
     }
 
     return res.status(201).json({

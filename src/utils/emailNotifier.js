@@ -153,8 +153,12 @@ async function sendAdminContactInquiryNotification({
     const cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
     const mailOptions = {
       from: getSenderAddress(),
+      replyTo: isValidEmail(email) ? String(email).trim() : undefined,
       to: adminEmail,
       subject: emailSubject,
+      headers: {
+        'X-Entity-Ref-ID': referenceId
+      },
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
           <!-- Top Banner -->
@@ -293,8 +297,12 @@ async function sendCustomerContactInquiryConfirmation({
   try {
     const mailOptions = {
       from: getSenderAddress(),
+      replyTo: getSenderAddress(),
       to: customerEmail,
       subject: emailSubject,
+      headers: {
+        'X-Entity-Ref-ID': referenceId
+      },
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
           <!-- Header Banner -->
@@ -528,8 +536,12 @@ async function sendAdminLeadNotification({
     const cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
     const mailOptions = {
       from: getSenderAddress(),
+      replyTo: isValidEmail(email) ? String(email).trim() : undefined,
       to: adminEmail,
       subject: emailSubject,
+      headers: {
+        'X-Entity-Ref-ID': referenceId
+      },
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
           <!-- Top Banner -->
@@ -735,8 +747,12 @@ async function sendCustomerLeadConfirmation({
   try {
     const mailOptions = {
       from: getSenderAddress(),
+      replyTo: getSenderAddress(),
       to: customerEmail,
       subject: emailSubject,
+      headers: {
+        'X-Entity-Ref-ID': referenceId
+      },
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
           <!-- Header Banner -->

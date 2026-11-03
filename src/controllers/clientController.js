@@ -41,6 +41,7 @@ async function getClientsFromPageOrDb() {
 // Get active clients (public) - prioritizes ClientsPage singleton
 exports.getClients = async (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     const clients = await getClientsFromPageOrDb();
     res.json({ success: true, data: clients });
   } catch (error) {
@@ -52,6 +53,7 @@ exports.getClients = async (req, res) => {
 // Admin: Get all clients
 exports.getAllClients = async (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     const clients = await getClientsFromPageOrDb();
     res.json({ success: true, data: clients });
   } catch (error) {

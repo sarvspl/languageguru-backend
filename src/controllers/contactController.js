@@ -75,7 +75,22 @@ const getContactData = async () => {
 // GET /api/v1/contact (Public CMS content)
 exports.getContact = async (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     const contact = await getContactData();
+
+    // Dynamically sync phone from siteSettings if default
+    try {
+      const settings = await prisma.siteSettings.findUnique({ where: { id: 'singleton' } });
+      if (settings && settings.phone) {
+        const isLegacyPh = (v) => !v || String(v).replace(/[\s-+]/g, '') === '919147433460' || String(v).replace(/[\s-+]/g, '') === '9147433460';
+        if (isLegacyPh(contact.card1Phone)) {
+          contact.card1Phone = settings.phone;
+        }
+        if (settings.whatsappNumber && (!contact.urgentText || contact.urgentText.includes('9147433460'))) {
+          contact.urgentText = `🆘 Urgent: WhatsApp 24/7 at ${settings.whatsappNumber}`;
+        }
+      }
+    } catch (_) {}
     
     let parsedCerts = [];
     try {
@@ -251,27 +266,34 @@ exports.submitContactInquiry = async (req, res) => {
       `;
     }
 
-    // Trigger Admin notification (asynchronous, non-blocking)
-    sendAdminContactInquiryNotification({
-      referenceId,
-      name: cleanName,
-      phone: cleanPhone,
-      email: cleanEmail,
-      city: cleanCity,
-      service: cleanService,
-      message: cleanMessage
-    }).catch(err => console.error('[CONTACT INQUIRY] Admin email notification error:', err));
-
-    // Trigger Customer confirmation (if valid email provided)
-    if (isValidEmail(cleanEmail)) {
-      sendCustomerContactInquiryConfirmation({
-        toEmail: cleanEmail,
-        name: cleanName,
-        city: cleanCity,
+    // Sequential email notifications to avoid Hostinger SMTP socket collision
+    try {
+      await sendAdminContactInquiryNotification({
         referenceId,
+        name: cleanName,
+        phone: cleanPhone,
+        email: cleanEmail,
+        city: cleanCity,
         service: cleanService,
         message: cleanMessage
-      }).catch(err => console.error('[CONTACT INQUIRY] Customer confirmation email error:', err));
+      });
+    } catch (adminErr) {
+      console.error('[CONTACT INQUIRY] Admin email notification error:', adminErr && adminErr.message ? adminErr.message : adminErr);
+    }
+
+    if (isValidEmail(cleanEmail)) {
+      try {
+        await sendCustomerContactInquiryConfirmation({
+          toEmail: cleanEmail,
+          name: cleanName,
+          city: cleanCity,
+          referenceId,
+          service: cleanService,
+          message: cleanMessage
+        });
+      } catch (custErr) {
+        console.error('[CONTACT INQUIRY] Customer confirmation email error:', custErr && custErr.message ? custErr.message : custErr);
+      }
     }
 
     return res.status(201).json({

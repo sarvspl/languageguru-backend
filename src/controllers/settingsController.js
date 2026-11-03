@@ -122,6 +122,7 @@ const getOrCreateSettings = async () => {
 // GET /api/v1/settings (Admin full access)
 const getSettings = async (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     const settings = await getOrCreateSettings();
     return res.status(200).json({ success: true, settings });
   } catch (error) {
@@ -132,6 +133,7 @@ const getSettings = async (req, res) => {
 
 const getPublicSettings = async (req, res) => {
   try {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     const settings = await getOrCreateSettings();
     const { gstNumber, panNumber, ...publicSettings } = settings;
     return res.status(200).json({ success: true, settings: publicSettings });
@@ -165,13 +167,20 @@ const updateSettings = async (req, res) => {
     ];
 
     const updateData = {};
-    if (req.body.phone && (!req.body.whatsappNumber || req.body.whatsappNumber === '+919147433460')) {
-      updateData.whatsappNumber = req.body.phone;
-    }
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) {
         updateData[field] = req.body[field];
       }
+    }
+
+    // Auto-sync whatsappNumber with phone if whatsappNumber is missing or unchanged legacy default
+    const isLegacyDefaultWa = (val) => {
+      if (!val) return true;
+      const clean = String(val).replace(/[\s-+]/g, '');
+      return clean === '919147433460' || clean === '9147433460';
+    };
+    if (req.body.phone && (!updateData.whatsappNumber || isLegacyDefaultWa(updateData.whatsappNumber))) {
+      updateData.whatsappNumber = req.body.phone;
     }
 
     const settings = await prisma.siteSettings.upsert({
