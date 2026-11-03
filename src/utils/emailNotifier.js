@@ -306,7 +306,7 @@ async function sendCustomerContactInquiryConfirmation({
                 Thank You, ${nameWithCity}!
               </h2>
               <p style="color: #475569; font-size: 14px; margin: 8px 0 0; line-height: 1.5;">
-                We have successfully received your inquiry. Our support team has assigned a dedicated coordinator to respond within <strong>15–30 minutes</strong>.
+                ${emailBodyText}
               </p>
             </div>
 
@@ -719,7 +719,7 @@ async function sendCustomerLeadConfirmation({
                 Thank You, ${nameWithCity}!
               </h2>
               <p style="color: #475569; font-size: 14px; margin: 8px 0 0; line-height: 1.5;">
-                We have successfully received your quote request. Our translation coordinators are reviewing your document scope right now.
+                ${emailBodyText}
               </p>
             </div>
 
@@ -987,7 +987,7 @@ async function sendLinguistApplicationNotifications({
                 Welcome, ${nameWithCity}!
               </h2>
               <p style="color: #475569; font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
-                Your application to join the certified translator and interpreter panel at Language Guru India has been successfully registered.
+                ${custBodyText}
               </p>
               <div style="background: #f8fafc; border: 1.5px dashed #93c5fd; border-radius: 8px; padding: 12px; text-align: center; margin-bottom: 18px;">
                 <span style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: bold; display: block;">Application Reference Number</span>

@@ -240,16 +240,19 @@ model SiteSettings {
   emailAdminHeadingContact     String?  @default("New Contact Inquiry: {name} ({city})")
   emailCustomerSubjectContact  String?  @default("✅ Contact Inquiry Received: {name} ({city}) [Ref: {referenceId}] — Language Guru India")
   emailCustomerHeadingContact  String?  @default("Thank You, {name}!")
+  emailCustomerBodyContact     String?  @default("We have successfully received your inquiry. Our support team has assigned a dedicated coordinator to respond within 15–30 minutes.")
 
   emailAdminSubjectQuote       String?  @default("🔔 New Quote Request: {service} ({sourceLang} → {targetLang}) [Ref: {referenceId}]")
   emailAdminHeadingQuote       String?  @default("New Quote Request: {service}")
   emailCustomerSubjectQuote    String?  @default("✅ Quote Request Received: {service} [Ref: {referenceId}] — Language Guru India")
   emailCustomerHeadingQuote    String?  @default("Quotation Request Confirmed")
+  emailCustomerBodyQuote       String?  @default("We have successfully received your quote request. Our translation coordinators are reviewing your document scope right now.")
 
   emailAdminSubjectJoin        String?  @default("🤝 New Linguist Application: {name} - {expertise} [Ref: {referenceId}]")
   emailAdminHeadingJoin        String?  @default("New Linguist Application: {name}")
   emailCustomerSubjectJoin     String?  @default("✅ Application Received: Language Guru Linguist Panel [Ref: {referenceId}]")
   emailCustomerHeadingJoin     String?  @default("Application Received Successfully")
+  emailCustomerBodyJoin        String?  @default("Your application to join the certified translator and interpreter panel at Language Guru India has been successfully registered.")
 
   // System
   maintenanceMode   Boolean  @default(false)

@@ -49,7 +49,10 @@ async function ensureSettingsColumns() {
     'emailAdminSubjectJoin',
     'emailAdminHeadingJoin',
     'emailCustomerSubjectJoin',
-    'emailCustomerHeadingJoin'
+    'emailCustomerHeadingJoin',
+    'emailCustomerBodyContact',
+    'emailCustomerBodyQuote',
+    'emailCustomerBodyJoin'
   ];
   try {
     for (const col of cols) {
@@ -70,16 +73,19 @@ const DEFAULT_TEMPLATES = {
   emailAdminHeadingContact: "New Contact Inquiry: {name} ({city})",
   emailCustomerSubjectContact: "✅ Contact Inquiry Received: {name} ({city}) [Ref: {referenceId}] — Language Guru India",
   emailCustomerHeadingContact: "Thank You, {name}!",
+  emailCustomerBodyContact: "We have successfully received your inquiry. Our support team has assigned a dedicated coordinator to respond within 15–30 minutes.",
 
   emailAdminSubjectQuote: "🔔 New Quote Request: {service} ({sourceLang} → {targetLang}) [Ref: {referenceId}]",
   emailAdminHeadingQuote: "New Quote Request: {service}",
   emailCustomerSubjectQuote: "✅ Quote Request Received: {service} [Ref: {referenceId}] — Language Guru India",
   emailCustomerHeadingQuote: "Quotation Request Confirmed",
+  emailCustomerBodyQuote: "We have successfully received your quote request. Our translation coordinators are reviewing your document scope right now.",
 
   emailAdminSubjectJoin: "🤝 New Linguist Application: {name} - {expertise} [Ref: {referenceId}]",
   emailAdminHeadingJoin: "New Linguist Application: {name}",
   emailCustomerSubjectJoin: "✅ Application Received: Language Guru Linguist Panel [Ref: {referenceId}]",
-  emailCustomerHeadingJoin: "Application Received Successfully"
+  emailCustomerHeadingJoin: "Application Received Successfully",
+  emailCustomerBodyJoin: "Your application to join the certified translator and interpreter panel at Language Guru India has been successfully registered."
 };
 
 // ─── Helper: Get or Create singleton settings record ───────────────────────
@@ -158,6 +164,9 @@ const updateSettings = async (req, res) => {
     ];
 
     const updateData = {};
+    if (req.body.phone && (!req.body.whatsappNumber || req.body.whatsappNumber === '+919312690490')) {
+      updateData.whatsappNumber = req.body.phone;
+    }
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) {
         updateData[field] = req.body[field];
