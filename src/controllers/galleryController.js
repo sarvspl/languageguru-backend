@@ -1,31 +1,74 @@
-// Defensive helper: ensures new certificate columns exist in DB
-async function ensureGalleryColumns() {
-  try {
-    await prisma.$executeRawUnsafe(`
-      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
-      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "sampleFileUrl" TEXT;
-      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "price" TEXT;
-      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "service" TEXT;
-      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "serviceKey" TEXT;
-      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "city" TEXT;
-      ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "cityKey" TEXT;
-    `);
-  } catch (e) {
-    console.warn('ensureGalleryColumns warning:', e.message);
-  }
-}
-
 const prisma = require('../config/db');
 const { randomUUID } = require('crypto');
+
+// Defensive helper: ensures new certificate columns exist in DB
+async function ensureGalleryColumns() {
+  const cols = [
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;',
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "sampleFileUrl" TEXT;',
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "price" TEXT;',
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "service" TEXT;',
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "serviceKey" TEXT;',
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "city" TEXT;',
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "cityKey" TEXT;',
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "showOnHome" BOOLEAN DEFAULT true;',
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "showOnServices" BOOLEAN DEFAULT true;',
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "showOnLanguages" BOOLEAN DEFAULT true;',
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "showOnCities" BOOLEAN DEFAULT true;',
+    'ALTER TABLE "GalleryItem" ADD COLUMN IF NOT EXISTS "showOnCombo" BOOLEAN DEFAULT true;'
+  ];
+  for (const sql of cols) {
+    try {
+      await prisma.$executeRawUnsafe(sql);
+    } catch (e) {
+      // silently ignore if exists
+    }
+  }
+}
 
 // Get all gallery items (public - active only)
 const getGallery = async (req, res) => {
   try {
-    const items = await prisma.$queryRaw`
-      SELECT * FROM "GalleryItem"
-      WHERE "isActive" = true
-      ORDER BY "createdAt" ASC
-    `;
+    await ensureGalleryColumns();
+    const { placement } = req.query;
+    let items;
+    if (placement === 'home') {
+      items = await prisma.$queryRaw`
+        SELECT * FROM "GalleryItem"
+        WHERE "isActive" = true AND ("showOnHome" = true OR "showOnHome" IS NULL)
+        ORDER BY "createdAt" ASC
+      `;
+    } else if (placement === 'services') {
+      items = await prisma.$queryRaw`
+        SELECT * FROM "GalleryItem"
+        WHERE "isActive" = true AND ("showOnServices" = true OR "showOnServices" IS NULL)
+        ORDER BY "createdAt" ASC
+      `;
+    } else if (placement === 'languages') {
+      items = await prisma.$queryRaw`
+        SELECT * FROM "GalleryItem"
+        WHERE "isActive" = true AND ("showOnLanguages" = true OR "showOnLanguages" IS NULL)
+        ORDER BY "createdAt" ASC
+      `;
+    } else if (placement === 'cities') {
+      items = await prisma.$queryRaw`
+        SELECT * FROM "GalleryItem"
+        WHERE "isActive" = true AND ("showOnCities" = true OR "showOnCities" IS NULL)
+        ORDER BY "createdAt" ASC
+      `;
+    } else if (placement === 'combo') {
+      items = await prisma.$queryRaw`
+        SELECT * FROM "GalleryItem"
+        WHERE "isActive" = true AND ("showOnCombo" = true OR "showOnCombo" IS NULL)
+        ORDER BY "createdAt" ASC
+      `;
+    } else {
+      items = await prisma.$queryRaw`
+        SELECT * FROM "GalleryItem"
+        WHERE "isActive" = true
+        ORDER BY "createdAt" ASC
+      `;
+    }
     res.status(200).json({ success: true, data: items });
   } catch (error) {
     console.error('getGallery error:', error);
@@ -36,6 +79,7 @@ const getGallery = async (req, res) => {
 // Get ALL gallery items (admin — includes inactive)
 const getAllGallery = async (req, res) => {
   try {
+    await ensureGalleryColumns();
     const items = await prisma.$queryRaw`
       SELECT * FROM "GalleryItem"
       ORDER BY "createdAt" ASC
@@ -50,9 +94,11 @@ const getAllGallery = async (req, res) => {
 // Create a gallery item
 const createGalleryItem = async (req, res) => {
   try {
+    await ensureGalleryColumns();
     const {
       doc, lang, flag, langKey, time, icon, seal, acc, cat,
-      imageUrl, sampleFileUrl, price, service, serviceKey, city, cityKey, isActive
+      imageUrl, sampleFileUrl, price, service, serviceKey, city, cityKey, isActive,
+      showOnHome, showOnServices, showOnLanguages, showOnCities, showOnCombo
     } = req.body;
 
     if (!doc || !lang) {
@@ -67,39 +113,28 @@ const createGalleryItem = async (req, res) => {
     const finalSeal = seal || finalFlag;
     const finalCat = cat || 'General';
     const activeVal = isActive !== false;
+    const finalShowOnHome = showOnHome !== false;
+    const finalShowOnServices = showOnServices !== false;
+    const finalShowOnLanguages = showOnLanguages !== false;
+    const finalShowOnCities = showOnCities !== false;
+    const finalShowOnCombo = showOnCombo !== false;
     const now = new Date();
 
-    try {
-      await prisma.$executeRaw`
-        INSERT INTO "GalleryItem" (
-          "id", "doc", "lang", "flag", "langKey", "time", "icon", "seal", "acc", "cat",
-          "imageUrl", "sampleFileUrl", "price", "service", "serviceKey", "city", "cityKey",
-          "isActive", "createdAt", "updatedAt"
-        ) VALUES (
-          ${id}, ${doc.trim()}, ${lang.trim()}, ${finalFlag}, ${finalLangKey}, ${finalTime},
-          ${finalIcon}, ${finalSeal}, ${acc || null}, ${finalCat},
-          ${imageUrl || null}, ${sampleFileUrl || null}, ${price || null},
-          ${service || null}, ${serviceKey || null}, ${city || null}, ${cityKey || null},
-          ${activeVal}, ${now}, ${now}
-        )
-      `;
-    } catch (dbErr) {
-      console.warn('[GALLERY] Insert failed, ensuring columns exist and retrying:', dbErr.message);
-      await ensureGalleryColumns();
-      await prisma.$executeRaw`
-        INSERT INTO "GalleryItem" (
-          "id", "doc", "lang", "flag", "langKey", "time", "icon", "seal", "acc", "cat",
-          "imageUrl", "sampleFileUrl", "price", "service", "serviceKey", "city", "cityKey",
-          "isActive", "createdAt", "updatedAt"
-        ) VALUES (
-          ${id}, ${doc.trim()}, ${lang.trim()}, ${finalFlag}, ${finalLangKey}, ${finalTime},
-          ${finalIcon}, ${finalSeal}, ${acc || null}, ${finalCat},
-          ${imageUrl || null}, ${sampleFileUrl || null}, ${price || null},
-          ${service || null}, ${serviceKey || null}, ${city || null}, ${cityKey || null},
-          ${activeVal}, ${now}, ${now}
-        )
-      `;
-    }
+    await prisma.$executeRaw`
+      INSERT INTO "GalleryItem" (
+        "id", "doc", "lang", "flag", "langKey", "time", "icon", "seal", "acc", "cat",
+        "imageUrl", "sampleFileUrl", "price", "service", "serviceKey", "city", "cityKey",
+        "showOnHome", "showOnServices", "showOnLanguages", "showOnCities", "showOnCombo",
+        "isActive", "createdAt", "updatedAt"
+      ) VALUES (
+        ${id}, ${doc.trim()}, ${lang.trim()}, ${finalFlag}, ${finalLangKey}, ${finalTime},
+        ${finalIcon}, ${finalSeal}, ${acc || null}, ${finalCat},
+        ${imageUrl || null}, ${sampleFileUrl || null}, ${price || null},
+        ${service || null}, ${serviceKey || null}, ${city || null}, ${cityKey || null},
+        ${finalShowOnHome}, ${finalShowOnServices}, ${finalShowOnLanguages}, ${finalShowOnCities}, ${finalShowOnCombo},
+        ${activeVal}, ${now}, ${now}
+      )
+    `;
 
     const [created] = await prisma.$queryRaw`SELECT * FROM "GalleryItem" WHERE "id" = ${id}`;
     res.status(201).json({ success: true, data: created });
@@ -112,6 +147,7 @@ const createGalleryItem = async (req, res) => {
 // Update a gallery item
 const updateGalleryItem = async (req, res) => {
   try {
+    await ensureGalleryColumns();
     const { id } = req.params;
     const existing = await prisma.$queryRaw`SELECT * FROM "GalleryItem" WHERE "id" = ${id}`;
     if (!existing || existing.length === 0) {
@@ -121,7 +157,8 @@ const updateGalleryItem = async (req, res) => {
 
     const {
       doc, lang, flag, langKey, time, icon, seal, acc, cat,
-      imageUrl, sampleFileUrl, price, service, serviceKey, city, cityKey, isActive
+      imageUrl, sampleFileUrl, price, service, serviceKey, city, cityKey, isActive,
+      showOnHome, showOnServices, showOnLanguages, showOnCities, showOnCombo
     } = req.body;
 
     const finalDoc = doc !== undefined ? doc.trim() : curr.doc;
@@ -141,6 +178,13 @@ const updateGalleryItem = async (req, res) => {
     const finalCity = city !== undefined ? city : curr.city;
     const finalCityKey = cityKey !== undefined ? cityKey : curr.cityKey;
     const finalIsActive = isActive !== undefined ? isActive : curr.isActive;
+
+    const finalShowOnHome = showOnHome !== undefined ? Boolean(showOnHome) : (curr.showOnHome !== false);
+    const finalShowOnServices = showOnServices !== undefined ? Boolean(showOnServices) : (curr.showOnServices !== false);
+    const finalShowOnLanguages = showOnLanguages !== undefined ? Boolean(showOnLanguages) : (curr.showOnLanguages !== false);
+    const finalShowOnCities = showOnCities !== undefined ? Boolean(showOnCities) : (curr.showOnCities !== false);
+    const finalShowOnCombo = showOnCombo !== undefined ? Boolean(showOnCombo) : (curr.showOnCombo !== false);
+
     const now = new Date();
 
     await prisma.$executeRaw`
@@ -161,6 +205,11 @@ const updateGalleryItem = async (req, res) => {
         "serviceKey" = ${finalServiceKey},
         "city" = ${finalCity},
         "cityKey" = ${finalCityKey},
+        "showOnHome" = ${finalShowOnHome},
+        "showOnServices" = ${finalShowOnServices},
+        "showOnLanguages" = ${finalShowOnLanguages},
+        "showOnCities" = ${finalShowOnCities},
+        "showOnCombo" = ${finalShowOnCombo},
         "isActive" = ${finalIsActive},
         "updatedAt" = ${now}
       WHERE "id" = ${id}

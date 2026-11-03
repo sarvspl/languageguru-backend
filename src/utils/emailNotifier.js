@@ -261,6 +261,22 @@ async function sendCustomerContactInquiryConfirmation({
 
   const customerEmail = toEmail.trim();
   const nameWithCity = formatNameCity(name, city);
+  const emailSettings = await getEmailSettings();
+  const emailSubject = interpolateEmailText(
+    emailSettings.emailCustomerSubjectContact,
+    { name, city: city || 'Not specified', referenceId, service: service || 'General Inquiry' },
+    `✅ Contact Inquiry Received: ${nameWithCity} [Ref: ${referenceId}] — Language Guru India`
+  );
+  const emailHeading = interpolateEmailText(
+    emailSettings.emailCustomerHeadingContact,
+    { name, city: city || 'Not specified', referenceId, service: service || 'General Inquiry' },
+    `Thank You, ${nameWithCity}!`
+  );
+  const emailBodyText = interpolateEmailText(
+    emailSettings.emailCustomerBodyContact,
+    { name, city: city || 'Not specified', referenceId, service: service || 'General Inquiry' },
+    `We have successfully received your inquiry. Our support team has assigned a dedicated coordinator to respond within 15–30 minutes.`
+  );
   console.log(`[CONTACT INQUIRY CUSTOMER CONFIRMATION] Preparing confirmation for ${customerEmail} (${nameWithCity}) [Ref: ${referenceId}]`);
 
   const transporter = getTransporter();
@@ -303,7 +319,7 @@ async function sendCustomerContactInquiryConfirmation({
                 </tr>
               </table>
               <h2 style="margin: 0; font-size: 22px; color: #166534; font-weight: 800;">
-                Thank You, ${nameWithCity}!
+                ${emailHeading}
               </h2>
               <p style="color: #475569; font-size: 14px; margin: 8px 0 0; line-height: 1.5;">
                 ${emailBodyText}
@@ -480,6 +496,18 @@ async function sendAdminLeadNotification({
     if (match && match[1]) displayFiles = match[1].trim();
   }
 
+  const emailSettings = await getEmailSettings();
+  const emailSubject = interpolateEmailText(
+    emailSettings.emailAdminSubjectQuote,
+    { name, city: city || 'Not specified', referenceId, service: serviceKey || 'Certified Translation', sourceLang: sourceLang || 'English', targetLang: targetLang || 'Hindi' },
+    `🔔 New Quote Request: ${nameWithCity} - ${serviceKey || 'Certified Translation'} [Ref: ${referenceId}]`
+  );
+  const emailHeading = interpolateEmailText(
+    emailSettings.emailAdminHeadingQuote,
+    { name, city: city || 'Not specified', referenceId, service: serviceKey || 'Certified Translation', sourceLang: sourceLang || 'English', targetLang: targetLang || 'Hindi' },
+    `New Quote Request: ${nameWithCity}`
+  );
+
   console.log(`[ADMIN EMAIL NOTIFICATION] Processing quote lead [${referenceId}] for admin ${adminEmail} from ${nameWithCity}`);
 
   const transporter = getTransporter();
@@ -499,7 +527,7 @@ async function sendAdminLeadNotification({
     const mailOptions = {
       from: getSenderAddress(),
       to: adminEmail,
-      subject: `🔔 New Quote Request: ${nameWithCity} - ${serviceKey || 'Certified Translation'} [Ref: ${referenceId}]`,
+      subject: emailSubject,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
           <!-- Top Banner -->
@@ -508,7 +536,7 @@ async function sendAdminLeadNotification({
               ⭐ New Lead Received &bull; Immediate Action Required
             </div>
             <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #ffffff;">
-              New Quote Request: ${nameWithCity}
+              ${emailHeading}
             </h2>
             <p style="margin: 6px 0 0; font-size: 13.5px; opacity: 0.95;">
               Submission Reference: <strong style="font-family: monospace; background: rgba(255,255,255,0.18); padding: 2px 8px; border-radius: 4px;">${referenceId}</strong>
@@ -674,6 +702,23 @@ async function sendCustomerLeadConfirmation({
     }
   }
 
+  const emailSettings = await getEmailSettings();
+  const emailSubject = interpolateEmailText(
+    emailSettings.emailCustomerSubjectQuote,
+    { name, city: city || 'Not specified', referenceId, service: serviceKey || 'Certified Translation', sourceLang: sourceLang || 'English', targetLang: targetLang || 'Hindi' },
+    `✅ Quote Request Received: ${serviceKey || 'Certified Translation'} [Ref: ${referenceId}] — Language Guru India`
+  );
+  const emailHeading = interpolateEmailText(
+    emailSettings.emailCustomerHeadingQuote,
+    { name, city: city || 'Not specified', referenceId, service: serviceKey || 'Certified Translation', sourceLang: sourceLang || 'English', targetLang: targetLang || 'Hindi' },
+    `Quotation Request Confirmed`
+  );
+  const emailBodyText = interpolateEmailText(
+    emailSettings.emailCustomerBodyQuote,
+    { name, city: city || 'Not specified', referenceId, service: serviceKey || 'Certified Translation', sourceLang: sourceLang || 'English', targetLang: targetLang || 'Hindi' },
+    `We have successfully received your quote request. Our translation coordinators are reviewing your document scope right now.`
+  );
+
   console.log(`[CUSTOMER CONFIRMATION EMAIL] Preparing confirmation for ${customerEmail} (${nameWithCity}) [Ref: ${referenceId}]`);
 
   const transporter = getTransporter();
@@ -689,7 +734,7 @@ async function sendCustomerLeadConfirmation({
     const mailOptions = {
       from: getSenderAddress(),
       to: customerEmail,
-      subject: `📋 Quote Request Received: ${nameWithCity} [Ref: ${referenceId}] — Language Guru India`,
+      subject: emailSubject,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
           <!-- Header Banner -->
@@ -716,7 +761,7 @@ async function sendCustomerLeadConfirmation({
                 </tr>
               </table>
               <h2 style="margin: 0; font-size: 22px; color: #166534; font-weight: 800;">
-                Thank You, ${nameWithCity}!
+                ${emailHeading}
               </h2>
               <p style="color: #475569; font-size: 14px; margin: 8px 0 0; line-height: 1.5;">
                 ${emailBodyText}
@@ -850,6 +895,33 @@ async function sendLinguistApplicationNotifications({
   const timestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
   const nameWithCity = formatNameCity(name, city);
 
+  const emailSettings = await getEmailSettings();
+  const adminSubject = interpolateEmailText(
+    emailSettings.emailAdminSubjectJoin,
+    { name, expertise: expertise || 'Translation', referenceId, sourceLang: srcLang, targetLang: tgtLang, city: city || 'India' },
+    `💼 New Translator Application: ${nameWithCity} [Ref: ${referenceId}]`
+  );
+  const adminHeading = interpolateEmailText(
+    emailSettings.emailAdminHeadingJoin,
+    { name, expertise: expertise || 'Translation', referenceId, sourceLang: srcLang, targetLang: tgtLang, city: city || 'India' },
+    `New Translator Application: ${nameWithCity}`
+  );
+  const custSubject = interpolateEmailText(
+    emailSettings.emailCustomerSubjectJoin,
+    { name, expertise: expertise || 'Translation', referenceId, sourceLang: srcLang, targetLang: tgtLang, city: city || 'India' },
+    `🎉 Application Received: Welcome ${nameWithCity} [Ref: ${referenceId}] — Language Guru Linguist Panel`
+  );
+  const custHeading = interpolateEmailText(
+    emailSettings.emailCustomerHeadingJoin,
+    { name, expertise: expertise || 'Translation', referenceId, sourceLang: srcLang, targetLang: tgtLang, city: city || 'India' },
+    `Welcome, ${nameWithCity}!`
+  );
+  const custBodyText = interpolateEmailText(
+    emailSettings.emailCustomerBodyJoin,
+    { name, expertise: expertise || 'Translation', referenceId, sourceLang: srcLang, targetLang: tgtLang, city: city || 'India' },
+    `Your application to join the certified translator and interpreter panel at Language Guru India has been successfully registered.`
+  );
+
   console.log(`[LINGUIST APPLICATION] Processing application [${referenceId}] from ${nameWithCity}`);
 
   const transporter = getTransporter();
@@ -871,7 +943,7 @@ async function sendLinguistApplicationNotifications({
     const adminMail = {
       from: getSenderAddress(),
       to: adminEmail,
-      subject: `💼 New Translator Application: ${nameWithCity} [Ref: ${referenceId}]`,
+      subject: adminSubject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
           <!-- Header Banner -->
@@ -880,7 +952,7 @@ async function sendLinguistApplicationNotifications({
               🌐 Careers &bull; New Translator Application
             </div>
             <h2 style="margin: 0; font-size: 22px; font-weight: 800; color: #ffffff;">
-              New Translator Application: ${nameWithCity}
+              ${adminHeading}
             </h2>
             <p style="margin: 6px 0 0; font-size: 13.5px; opacity: 0.95;">
               Application Reference: <strong style="font-family: monospace; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px;">${referenceId}</strong>
@@ -971,7 +1043,7 @@ async function sendLinguistApplicationNotifications({
       const applicantMail = {
         from: getSenderAddress(),
         to: email.trim(),
-        subject: `🎉 Application Received: Welcome ${nameWithCity} [Ref: ${referenceId}] — Language Guru Linguist Panel`,
+        subject: custSubject,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
             <div style="background: #1a3a6b; color: #ffffff; padding: 24px 28px; text-align: center;">
@@ -984,7 +1056,7 @@ async function sendLinguistApplicationNotifications({
             </div>
             <div style="padding: 26px 28px; background: #ffffff;">
               <h2 style="margin: 0 0 10px; font-size: 20px; color: #166534; font-weight: 800;">
-                Welcome, ${nameWithCity}!
+                ${custHeading}
               </h2>
               <p style="color: #475569; font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
                 ${custBodyText}

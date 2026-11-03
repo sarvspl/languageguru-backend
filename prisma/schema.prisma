@@ -140,6 +140,11 @@ model GalleryItem {
   serviceKey    String?  // Service key e.g. "certified"
   city          String?  // City name e.g. "New Delhi"
   cityKey       String?  // City key e.g. "new-delhi"
+  showOnHome      Boolean  @default(true)
+  showOnServices  Boolean  @default(true)
+  showOnLanguages Boolean  @default(true)
+  showOnCities    Boolean  @default(true)
+  showOnCombo     Boolean  @default(true)
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
