@@ -1,5 +1,11 @@
 const prisma = require('../config/db');
-const { isValidEmail, sendAdminLeadNotification, sendCustomerLeadConfirmation } = require('../utils/emailNotifier');
+const {
+  isValidEmail,
+  sendAdminLeadNotification,
+  sendCustomerLeadConfirmation,
+  getEmailSettings,
+  formatWhatsAppText
+} = require('../utils/emailNotifier');
 
 // Submit quote request (Public)
 const submitQuote = async (req, res) => {
@@ -185,11 +191,50 @@ const submitQuote = async (req, res) => {
       }
     }
 
+    // Compute real-time WhatsApp destination and pre-filled message from active settings
+    let cleanWa = '919147433460';
+    let waMsg = `Hello Language Guru,\nSubmitted Translation Query (${referenceId}) for ${quote.sourceLang || 'English'} to ${quote.targetLang || 'Hindi'} ${quote.serviceKey || 'Certified Translation'}\n\nPlease confirm next steps.\n\nRegards,\n${quote.name}\n${quote.phone}`;
+    let waUrl = `https://wa.me/${cleanWa}?text=${encodeURIComponent(waMsg)}`;
+
+    try {
+      const settings = await getEmailSettings();
+      cleanWa = String(settings.whatsappNumber || settings.phone || '919147433460').replace(/[^0-9]/g, '');
+      waMsg = formatWhatsAppText(
+        settings.whatsappQuoteTemplate,
+        {
+          referenceId,
+          refId: referenceId,
+          name: quote.name,
+          phone: quote.phone,
+          email: quote.email || 'N/A',
+          city: effectiveCity || 'New Delhi',
+          service: quote.serviceKey || 'Certified Translation',
+          sourceLang: quote.sourceLang || 'English',
+          targetLang: quote.targetLang || 'Hindi',
+          docType: effectiveDocType || 'Document',
+          pages: quote.pages,
+          unit: quote.isInterpreter ? 'Day(s)' : (quote.pages == 1 ? 'page' : 'pages'),
+          addons: effectiveAddons || 'None',
+          total: effectiveTotal || 'Quote on request',
+          notes: cleanUserNotes ? `Special Notes: ${cleanUserNotes}\n` : '',
+          message: cleanUserNotes || 'Quote Request'
+        },
+        "Hello Language Guru,\nSubmitted Translation Query ({referenceId}) for {sourceLang} to {targetLang} {service}\n\nQuery:\nDocument: {docType}, {pages} {unit}\nAdd-ons: {addons}\nCity: {city}\n\nEstimated total: {total} (incl. GST)\n{notes}\nPlease confirm the next steps.\n\nRegards,\n{name}\n{phone}\n{email}"
+      );
+      waUrl = `https://wa.me/${cleanWa}?text=${encodeURIComponent(waMsg)}`;
+    } catch (waErr) {
+      console.warn('[QUOTE LEAD] WhatsApp formatting fallback:', waErr && waErr.message ? waErr.message : waErr);
+    }
+
     return res.status(201).json({
       success: true,
       message: 'Quote request submitted successfully!',
       refId: referenceId,
-      data: { ...quote, referenceId }
+      referenceId,
+      data: { ...quote, referenceId },
+      whatsappNumber: cleanWa,
+      whatsappMessage: waMsg,
+      whatsappUrl: waUrl
     });
   } catch (error) {
     console.error('Submit quote error:', error);

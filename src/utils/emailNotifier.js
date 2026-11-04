@@ -71,9 +71,15 @@ function getAdminEmail() {
 
 let _cachedSiteSettings = null;
 let _cachedSettingsTime = 0;
+
+function invalidateEmailSettingsCache() {
+  _cachedSiteSettings = null;
+  _cachedSettingsTime = 0;
+}
+
 async function getEmailSettings() {
   const now = Date.now();
-  if (_cachedSiteSettings && now - _cachedSettingsTime < 20000) {
+  if (_cachedSiteSettings && now - _cachedSettingsTime < 5000) {
     return _cachedSiteSettings;
   }
   try {
@@ -92,11 +98,28 @@ async function getEmailSettings() {
 function interpolateEmailText(template, vars, fallback) {
   if (!template || !String(template).trim()) return fallback;
   let text = String(template);
-  for (const [k, v] of Object.entries(vars)) {
+  // Also provide refId alias if referenceId is given
+  if (vars && vars.referenceId && !vars.refId) {
+    vars.refId = vars.referenceId;
+  }
+  for (const [k, v] of Object.entries(vars || {})) {
     const reg = new RegExp(`\\{${k}\\}`, 'g');
     text = text.replace(reg, v !== undefined && v !== null ? String(v) : '');
   }
   return text.trim();
+}
+
+function formatWhatsAppText(template, vars, fallback) {
+  let text = (template && String(template).trim()) ? String(template) : fallback;
+  if (!text) return '';
+  if (vars && vars.referenceId && !vars.refId) {
+    vars.refId = vars.referenceId;
+  }
+  for (const [k, v] of Object.entries(vars || {})) {
+    const reg = new RegExp(`\\{${k}\\}`, 'g');
+    text = text.replace(reg, v !== undefined && v !== null ? String(v) : '');
+  }
+  return text.replace(/\n{3,}/g, '\n\n').trim();
 }
 
 function formatNameCity(name, city) {
@@ -733,6 +756,9 @@ async function sendCustomerLeadConfirmation({
     `We have successfully received your quote request. Our translation coordinators are reviewing your document scope right now.`
   );
 
+  const supportWa = (emailSettings?.whatsappNumber || '919147433460').replace(/[^0-9]/g, '');
+  const supportPhone = emailSettings?.phone || '+91-9147433460';
+
   console.log(`[CUSTOMER CONFIRMATION EMAIL] Preparing confirmation for ${customerEmail} (${nameWithCity}) [Ref: ${referenceId}]`);
 
   const transporter = getTransporter();
@@ -1123,6 +1149,10 @@ async function sendLinguistApplicationNotifications({
 module.exports = {
   isValidEmail,
   formatNameCity,
+  interpolateEmailText,
+  formatWhatsAppText,
+  invalidateEmailSettingsCache,
+  getEmailSettings,
   sendAdminContactInquiryNotification,
   sendCustomerContactInquiryConfirmation,
   sendAdminLeadNotification,

@@ -3,7 +3,9 @@ const prisma = require('../config/db');
 const {
   isValidEmail,
   sendAdminContactInquiryNotification,
-  sendCustomerContactInquiryConfirmation
+  sendCustomerContactInquiryConfirmation,
+  getEmailSettings,
+  formatWhatsAppText
 } = require('../utils/emailNotifier');
 
 const DEFAULT_CONTACT = {
@@ -296,10 +298,42 @@ exports.submitContactInquiry = async (req, res) => {
       }
     }
 
+    // Compute real-time WhatsApp destination and pre-filled message from active settings
+    let cleanWa = '919147433460';
+    let waMsg = `Hello Language Guru,\nSubmitted Contact Inquiry (${referenceId}) for ${cleanService}\n\nInquiry Details:\nCity: ${cleanCity || 'New Delhi'}\nMessage: ${cleanMessage}\n\nPlease confirm next steps.\n\nRegards,\n${cleanName}\n${cleanPhone}`;
+    let waUrl = `https://wa.me/${cleanWa}?text=${encodeURIComponent(waMsg)}`;
+
+    try {
+      const settings = await getEmailSettings();
+      cleanWa = String(settings.whatsappNumber || settings.phone || '919147433460').replace(/[^0-9]/g, '');
+      waMsg = formatWhatsAppText(
+        settings.whatsappContactTemplate,
+        {
+          referenceId,
+          refId: referenceId,
+          name: cleanName,
+          phone: cleanPhone,
+          email: cleanEmail || 'N/A',
+          city: cleanCity || 'New Delhi',
+          service: cleanService,
+          message: cleanMessage,
+          notes: cleanMessage
+        },
+        "Hello Language Guru,\nSubmitted Contact Inquiry ({referenceId}) for {service}\n\nInquiry Details:\nCity: {city}\nMessage: {message}\n\nPlease confirm the next steps.\n\nRegards,\n{name}\n{phone}\n{email}"
+      );
+      waUrl = `https://wa.me/${cleanWa}?text=${encodeURIComponent(waMsg)}`;
+    } catch (waErr) {
+      console.warn('[CONTACT INQUIRY] WhatsApp formatting fallback:', waErr && waErr.message ? waErr.message : waErr);
+    }
+
     return res.status(201).json({
       success: true,
       message: 'Thank you! Your message has been sent successfully.',
-      refId: referenceId
+      refId: referenceId,
+      referenceId,
+      whatsappNumber: cleanWa,
+      whatsappMessage: waMsg,
+      whatsappUrl: waUrl
     });
   } catch (error) {
     console.error('Error submitting contact inquiry:', error);

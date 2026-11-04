@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const prisma = require('../config/db');
 const { adminCookieOptions } = require('../config/cookie');
+const { notifyFrontendRevalidate } = require('../utils/revalidate');
+const { invalidateEmailSettingsCache } = require('../utils/emailNotifier');
 
 const ENV_PATH = path.resolve(__dirname, '../../.env');
 
@@ -173,13 +175,8 @@ const updateSettings = async (req, res) => {
       }
     }
 
-    // Auto-sync whatsappNumber with phone if whatsappNumber is missing or unchanged legacy default
-    const isLegacyDefaultWa = (val) => {
-      if (!val) return true;
-      const clean = String(val).replace(/[\s-+]/g, '');
-      return clean === '919147433460' || clean === '9147433460';
-    };
-    if (req.body.phone && (!updateData.whatsappNumber || isLegacyDefaultWa(updateData.whatsappNumber))) {
+    // Only fallback whatsappNumber to phone if whatsappNumber was completely omitted
+    if (req.body.phone && (updateData.whatsappNumber === undefined || updateData.whatsappNumber === null || String(updateData.whatsappNumber).trim() === '')) {
       updateData.whatsappNumber = req.body.phone;
     }
 
@@ -189,6 +186,11 @@ const updateSettings = async (req, res) => {
       update: updateData,
     });
 
+    // Invalidate in-memory email settings cache & notify frontend to revalidate in real time
+    invalidateEmailSettingsCache();
+    notifyFrontendRevalidate();
+
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     return res.status(200).json({ success: true, settings, message: 'Settings saved successfully!' });
   } catch (error) {
     console.error('Settings PUT error:', error);

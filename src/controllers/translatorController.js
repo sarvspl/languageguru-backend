@@ -1,5 +1,9 @@
 const prisma = require('../config/db');
-const { sendLinguistApplicationNotifications } = require('../utils/emailNotifier');
+const {
+  sendLinguistApplicationNotifications,
+  getEmailSettings,
+  formatWhatsAppText
+} = require('../utils/emailNotifier');
 
 // Get all translators (public — active only)
 const getTranslators = async (req, res) => {
@@ -133,9 +137,10 @@ const applyTranslator = async (req, res) => {
     });
 
     // Trigger dual email notification (Admin alert + Applicant confirmation)
+    const referenceId = `LG-JOIN-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const originalFileName = req.file ? req.file.originalname : (req.body.fileName || null);
     sendLinguistApplicationNotifications({
-      referenceId: `LG-JOIN-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      referenceId,
       name: translator.name,
       email: translator.email,
       phone: translator.phone,
@@ -149,9 +154,46 @@ const applyTranslator = async (req, res) => {
       originalFileName
     }).catch(emailErr => console.error('Linguist application email notification error:', emailErr));
 
+    // Compute real-time WhatsApp destination and pre-filled message from active settings
+    let cleanWa = '919147433460';
+    let waMsg = `Hello Language Guru,\nSubmitted Linguist Application (${referenceId}) for ${specStr} (${srcLang} to ${tgtLang})\n\nPlease confirm next steps.\n\nRegards,\n${translator.name}\n${translator.phone}`;
+    let waUrl = `https://wa.me/${cleanWa}?text=${encodeURIComponent(waMsg)}`;
+
+    try {
+      const settings = await getEmailSettings();
+      cleanWa = String(settings.whatsappNumber || settings.phone || '919147433460').replace(/[^0-9]/g, '');
+      waMsg = formatWhatsAppText(
+        settings.whatsappJoinTemplate,
+        {
+          referenceId,
+          refId: referenceId,
+          name: translator.name,
+          phone: translator.phone,
+          email: translator.email || 'N/A',
+          city: translator.city || 'India',
+          service: specStr,
+          expertise: specStr,
+          experience: expStr,
+          sourceLang: srcLang,
+          targetLang: tgtLang,
+          notes: intro || '',
+          message: intro || ''
+        },
+        "Hello Language Guru,\nSubmitted Linguist Application ({referenceId}) for {expertise} ({sourceLang} to {targetLang})\n\nDetails:\nExperience: {experience}\nCity: {city}\n\nPlease confirm the next steps.\n\nRegards,\n${translator.name}\n${translator.phone}"
+      );
+      waUrl = `https://wa.me/${cleanWa}?text=${encodeURIComponent(waMsg)}`;
+    } catch (waErr) {
+      console.warn('[LINGUIST APPLICATION] WhatsApp formatting fallback:', waErr && waErr.message ? waErr.message : waErr);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Application submitted successfully! Our team will review your application within 2-3 working days.',
+      refId: referenceId,
+      referenceId,
+      whatsappNumber: cleanWa,
+      whatsappMessage: waMsg,
+      whatsappUrl: waUrl,
       data: translator
     });
   } catch (error) {
